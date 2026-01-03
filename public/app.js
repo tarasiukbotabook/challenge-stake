@@ -1147,6 +1147,8 @@ window.closeModal = function(modalId) {
 window.showUserProfile = async function(userId) {
   console.log('=== showUserProfile called:', userId);
   
+  const isOwnProfile = currentUser && userId === currentUser.id;
+  
   // Скрываем нижнее меню
   document.querySelector('.bottom-nav').style.display = 'none';
   
@@ -1168,9 +1170,6 @@ window.showUserProfile = async function(userId) {
     console.log('Loading user stats for:', userId);
     const stats = await client.query("users:getUserStats", { userId });
     console.log('Stats received:', stats);
-    console.log('Stats username:', stats.username);
-    console.log('Stats firstName:', stats.firstName);
-    console.log('Stats photoUrl:', stats.photoUrl);
     
     const challenges = await client.query("challenges:getMy", { userId });
     console.log('Challenges received:', challenges.length);
@@ -1190,11 +1189,28 @@ window.showUserProfile = async function(userId) {
       ? `<img src="${user.photoUrl}" alt="${user.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
       : (user.firstName || user.username).charAt(0).toUpperCase();
     
+    // Баланс показываем только для своего профиля
+    const balanceSection = isOwnProfile ? `
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px;">
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.2);">
+          <span style="font-size: 14px; opacity: 0.7; margin-right: 8px;">Баланс:</span>
+          <span style="font-size: 18px; font-weight: 700; color: #10b981;">$${user.balance}</span>
+        </div>
+        <button class="btn-icon" onclick="showAddBalance()" title="Пополнить">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    ` : '';
+    
     profileContent.innerHTML = `
       <div class="profile-header">
         <div class="profile-avatar">${avatarHtml}</div>
         <h2 class="profile-username">@${user.username}</h2>
         ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+        ${balanceSection}
         <button class="btn btn-sm" onclick="shareProfile('${user.username}')" style="margin-top: 12px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
             <circle cx="18" cy="5" r="3"></circle>
@@ -1207,7 +1223,7 @@ window.showUserProfile = async function(userId) {
         </button>
       </div>
       
-      <div class="stats-compact" style="opacity: 1; margin: 20px 0;">
+      <div class="stats-compact" style="opacity: 1; margin: 20px 16px;">
         <div class="stat-item">
           <div class="stat-number">${stats.total}</div>
           <div class="stat-text">Всего</div>
@@ -1224,8 +1240,20 @@ window.showUserProfile = async function(userId) {
         </div>
       </div>
       
-      <div style="padding: 0 16px;">
-        <h3 style="margin-bottom: 16px; font-size: 18px;">Челленджи</h3>
+      ${isOwnProfile ? `
+        <div style="padding: 0 16px 16px;">
+          <button class="btn btn-primary btn-block" onclick="showCreateChallenge()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Создать челлендж
+          </button>
+        </div>
+      ` : ''}
+      
+      <div style="padding: 0;">
+        <h3 style="margin-bottom: 0; font-size: 18px; padding: 16px; opacity: 0.8;">Челленджи</h3>
         <div id="user-challenges-list"></div>
       </div>
     `;
@@ -1240,7 +1268,7 @@ window.showUserProfile = async function(userId) {
         </div>
       `;
     } else {
-      displayChallenges(challenges, false, challengesList);
+      displayChallenges(challenges, isOwnProfile, challengesList);
     }
     
   } catch (error) {
