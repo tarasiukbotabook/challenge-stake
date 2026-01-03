@@ -221,3 +221,26 @@ export const updateProfile = mutation({
     return { success: true };
   },
 });
+
+
+// Получить пользователя по username
+export const getUserByUsername = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("username"), args.username))
+      .first();
+
+    if (!user) {
+      throw new Error("Пользователь не найден");
+    }
+
+    return {
+      id: user._id,
+      username: user.username,
+      firstName: user.firstName,
+      photoUrl: user.photoUrl,
+    };
+  },
+});

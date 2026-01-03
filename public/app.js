@@ -284,6 +284,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('Setting up event listeners...');
     setupEventListeners();
+    
+    // Обработка роутинга
+    console.log('Handling routing...');
+    handleRouting();
+    
     console.log('=== App initialization completed ===');
   } catch (error) {
     console.error('=== Initialization error ===');
@@ -1016,7 +1021,7 @@ window.showFeedReports = async function() {
         const donationsText = donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">💰 Собрано донатов: $${donationsAmount}</div>` : '';
         
         return `
-          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s">
+          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s" data-report-id="${report._id}">
             <div class="report-header">
               <div class="report-user">
                 <div class="report-avatar">${avatarHtml}</div>
@@ -1227,8 +1232,8 @@ const APP_URL = window.location.origin;
 
 // Поделиться профилем
 window.shareProfile = function(username) {
-  const url = `${APP_URL}/@${username}`;
-  copyToClipboard(url, `Ссылка на профиль @${username} скопирована!`);
+  const url = `${APP_URL}/${username}`;
+  copyToClipboard(url, `Ссылка на профиль ${username} скопирована!`);
 }
 
 // Поделиться челленджем
@@ -1283,3 +1288,90 @@ function fallbackCopyToClipboard(text, successMessage) {
   
   document.body.removeChild(textArea);
 }
+
+
+// Роутинг
+async function handleRouting() {
+  const path = window.location.pathname;
+  console.log('Current path:', path);
+  
+  // Главная страница
+  if (path === '/' || path === '/index.html') {
+    return;
+  }
+  
+  // Профиль пользователя: /username
+  if (path.startsWith('/') && !path.includes('/challenge/') && !path.includes('/report/')) {
+    const username = path.substring(1); // Убираем первый /
+    if (username && currentUser) {
+      console.log('Opening profile for username:', username);
+      
+      try {
+        // Ищем пользователя по username
+        const user = await client.query("users:getUserByUsername", { username });
+        await showUserProfile(user.id);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        showToast(`Пользователь ${username} не найден`, 'error');
+      }
+    }
+    return;
+  }
+  
+  // Челлендж: /challenge/[id]
+  if (path.startsWith('/challenge/')) {
+    const challengeId = path.replace('/challenge/', '');
+    console.log('Opening challenge:', challengeId);
+    
+    if (currentUser) {
+      try {
+        // Переходим в ленту и показываем челлендж
+        switchScreen('feed');
+        showChallenges('all');
+        
+        // Прокручиваем к челленджу (опционально)
+        setTimeout(() => {
+          const challengeCard = document.querySelector(`[data-challenge-id="${challengeId}"]`);
+          if (challengeCard) {
+            challengeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            challengeCard.style.animation = 'pulse 1s ease';
+          }
+        }, 500);
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+        showToast('Ошибка загрузки челленджа', 'error');
+      }
+    }
+    return;
+  }
+  
+  // Отчёт: /report/[id]
+  if (path.startsWith('/report/')) {
+    const reportId = path.replace('/report/', '');
+    console.log('Opening report:', reportId);
+    
+    if (currentUser) {
+      try {
+        // Переходим в ленту и показываем отчёты
+        switchScreen('feed');
+        await showFeedReports();
+        
+        // Прокручиваем к отчёту (опционально)
+        setTimeout(() => {
+          const reportCard = document.querySelector(`[data-report-id="${reportId}"]`);
+          if (reportCard) {
+            reportCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            reportCard.style.animation = 'pulse 1s ease';
+          }
+        }, 500);
+      } catch (error) {
+        console.error('Error loading report:', error);
+        showToast('Ошибка загрузки отчёта', 'error');
+      }
+    }
+    return;
+  }
+}
+
+// Добавляем data-атрибуты для идентификации карточек
+// Это нужно добавить в функции отображения
