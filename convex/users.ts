@@ -195,3 +195,29 @@ export const getUserStats = query({
     };
   },
 });
+
+
+// Обновление профиля пользователя
+export const updateProfile = mutation({
+  args: {
+    userId: v.id("users"),
+    username: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("Пользователь не найден");
+
+    const updates: any = {};
+    if (args.username !== undefined) updates.username = args.username;
+    if (args.firstName !== undefined) updates.firstName = args.firstName;
+    if (args.lastName !== undefined) updates.lastName = args.lastName;
+    if (args.photoUrl !== undefined) updates.photoUrl = args.photoUrl;
+
+    await ctx.db.patch(args.userId, updates);
+
+    return { success: true };
+  },
+});
