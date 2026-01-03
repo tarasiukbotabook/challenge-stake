@@ -574,7 +574,7 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-around;
-  align-items: flex-end;
+  align-items: center;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   z-index: 100;
 }
@@ -608,7 +608,6 @@ body {
 
 .nav-btn-add {
   position: relative;
-  margin-bottom: 10px;
 }
 
 .nav-icon-add {
