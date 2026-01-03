@@ -815,34 +815,36 @@ form {
 .challenge-owner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .challenge-owner-avatar {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .challenge-owner-username {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 500;
+  font-size: 12px;
   cursor: pointer;
   transition: color 0.2s;
+  opacity: 0.8;
 }
 
 .challenge-owner-username:hover {
   color: #8b5cf6;
+  opacity: 1;
 }
 
 

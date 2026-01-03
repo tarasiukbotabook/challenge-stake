@@ -1457,7 +1457,8 @@ window.showChallengeDetail = async function(challengeId) {
 }
 
 // Показать модальное окно с деталями челленджа
-function showChallengeDetailModal(challenge, isMine) {
+// Показать модальное окно с деталями челленджа
+async function showChallengeDetailModal(challenge, isMine) {
   const deadline = new Date(challenge.deadline);
   const donationsAmount = challenge.donationsAmount || 0;
   const totalAmount = challenge.stakeAmount + donationsAmount;
@@ -1497,9 +1498,9 @@ function showChallengeDetailModal(challenge, isMine) {
       </div>
       
       <div style="padding: 20px;">
-        <div class="challenge-owner" style="margin-bottom: 16px;">
-          <div class="challenge-owner-avatar">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
-          <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}'); closeModal('challenge-detail-modal');">@${challenge.username || 'Unknown'}</div>
+        <div class="challenge-owner" style="margin-bottom: 16px; padding: 0; border: none;">
+          <div class="challenge-owner-avatar" style="width: 40px; height: 40px; font-size: 16px;">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
+          <div class="challenge-owner-username" style="font-size: 15px; font-weight: 600; opacity: 1;" onclick="showUserProfile('${challenge.userId}'); closeModal('challenge-detail-modal');">@${challenge.username || 'Unknown'}</div>
         </div>
         
         ${challenge.imageUrl ? `<img src="${challenge.imageUrl}" style="width: 100%; border-radius: 12px; margin-bottom: 16px;">` : ''}
@@ -1510,20 +1511,28 @@ function showChallengeDetailModal(challenge, isMine) {
         <p style="margin: 16px 0; opacity: 0.8;">${challenge.description || 'Без описания'}</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;">
-          <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 12px; border-radius: 8px;">
+          <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
             <div style="font-size: 13px; opacity: 0.6;">Категория</div>
             <div style="font-size: 16px; margin-top: 4px;">${getCategoryName(challenge.category)}</div>
           </div>
-          <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 12px; border-radius: 8px;">
+          <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px;">
             <div style="font-size: 13px; opacity: 0.6;">Дедлайн</div>
             <div style="font-size: 16px; margin-top: 4px;">${deadline.toLocaleDateString('ru-RU')}</div>
           </div>
         </div>
         
-        <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 16px; border-radius: 12px; margin: 20px 0;">
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 16px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(16, 185, 129, 0.2);">
           <div style="font-size: 13px; opacity: 0.6; margin-bottom: 8px;">Сумма</div>
           <div style="font-size: 24px; font-weight: 700; color: #10b981;">$${totalAmount}</div>
           ${donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Ставка: $${challenge.stakeAmount} + Донаты: $${donationsAmount}</div>` : ''}
+        </div>
+        
+        <div id="challenge-reports-section" style="margin-top: 24px;">
+          <h4 style="font-size: 16px; margin-bottom: 12px; opacity: 0.8;">История отчётов</h4>
+          <div id="challenge-reports-list" style="text-align: center; padding: 20px; opacity: 0.5;">
+            <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+            <div style="font-size: 14px;">Загрузка...</div>
+          </div>
         </div>
         
         ${actionButtons}
@@ -1533,10 +1542,57 @@ function showChallengeDetailModal(challenge, isMine) {
   
   modal.classList.add('active');
   
+  // Загружаем отчёты для этого челленджа
+  loadChallengeReports(challenge._id);
+  
   if (tg) {
     tg.BackButton.show();
     tg.BackButton.onClick(() => closeModal('challenge-detail-modal'));
     tg.HapticFeedback.impactOccurred('medium');
+  }
+}
+
+// Загрузить отчёты для челленджа
+async function loadChallengeReports(challengeId) {
+  const reportsList = document.getElementById('challenge-reports-list');
+  
+  if (!reportsList) return;
+  
+  try {
+    const reports = await client.query("challenges:getProgress", { challengeId });
+    
+    if (reports.length === 0) {
+      reportsList.innerHTML = `
+        <div style="text-align: center; padding: 20px; opacity: 0.5;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+          <div style="font-size: 14px;">Пока нет отчётов</div>
+        </div>
+      `;
+      return;
+    }
+    
+    reportsList.innerHTML = reports.map((report, index) => {
+      const date = new Date(report._creationTime);
+      const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      
+      return `
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: left;">
+          <div style="font-size: 13px; opacity: 0.6; margin-bottom: 6px;">${dateStr}</div>
+          <div style="font-size: 14px; line-height: 1.4;">${report.content}</div>
+          ${report.imageUrl ? `<img src="${report.imageUrl}" style="width: 100%; border-radius: 8px; margin-top: 8px;">` : ''}
+          ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" style="display: inline-block; margin-top: 8px; font-size: 13px; color: #8b5cf6; text-decoration: none;">Посмотреть пост →</a>` : ''}
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Ошибка загрузки отчётов:', error);
+    reportsList.innerHTML = `
+      <div style="text-align: center; padding: 20px; opacity: 0.5;">
+        <div style="font-size: 32px; margin-bottom: 8px;">❌</div>
+        <div style="font-size: 14px;">Ошибка загрузки</div>
+      </div>
+    `;
   }
 }
 
