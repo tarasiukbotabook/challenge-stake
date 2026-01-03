@@ -87,14 +87,12 @@
   </div>
 
   <script type="module">
-    import { ConvexHttpClient } from "convex/browser";
-    import { api } from "../convex/_generated/api.js";
+    import { ConvexHttpClient } from "https://cdn.jsdelivr.net/npm/convex@1.31.2/+esm";
 
     const CONVEX_URL = "https://greedy-badger-196.convex.cloud";
     const client = new ConvexHttpClient(CONVEX_URL);
 
     window.client = client;
-    window.api = api;
 
     // Логирование
     const originalLog = console.log;
@@ -151,7 +149,7 @@
         result.innerHTML = '⏳ Регистрация...';
         console.log('Registering user:', { telegramId, username, firstName, lastName });
         
-        const user = await client.mutation(api.users.registerTelegram, {
+        const user = await client.mutation("users:registerTelegram", {
           telegramId,
           username,
           firstName: firstName || undefined,
@@ -182,7 +180,7 @@
         result.innerHTML = '⏳ Вход...';
         console.log('Logging in user:', telegramId);
         
-        const user = await client.query(api.users.loginTelegram, {
+        const user = await client.query("users:loginTelegram", {
           telegramId,
         });
 

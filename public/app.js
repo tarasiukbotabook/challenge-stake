@@ -1,5 +1,4 @@
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api.js";
+import { ConvexHttpClient } from "https://cdn.jsdelivr.net/npm/convex@1.31.2/+esm";
 
 const CONVEX_URL = "https://greedy-badger-196.convex.cloud";
 const client = new ConvexHttpClient(CONVEX_URL);
@@ -63,7 +62,7 @@ async function autoLogin() {
   try {
     console.log('Attempting login...');
     // Пытаемся войти
-    const user = await client.query(api.users.loginTelegram, {
+    const user = await client.query("users:loginTelegram", {
       telegramId: telegramUser.id.toString(),
     });
     
@@ -91,7 +90,7 @@ async function autoLogin() {
       
       console.log('Attempting registration with data:', registrationData);
       
-      const result = await client.mutation(api.users.registerTelegram, registrationData);
+      const result = await client.mutation("users:registerTelegram", registrationData);
       
       currentUser = result;
       localStorage.setItem('user', JSON.stringify(currentUser));
@@ -190,7 +189,7 @@ async function loadStats() {
   if (!currentUser) return;
   
   try {
-    const stats = await client.query(api.users.getUserStats, { userId: currentUser.id });
+    const stats = await client.query("users:getUserStats", { userId: currentUser.id });
     
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
@@ -232,9 +231,9 @@ async function loadChallenges(type) {
   try {
     let challenges;
     if (type === 'my') {
-      challenges = await client.query(api.challenges.getMy, { userId: currentUser.id });
+      challenges = await client.query("challenges:getMy", { userId: currentUser.id });
     } else {
-      challenges = await client.query(api.challenges.getAll);
+      challenges = await client.query("challenges:getAll");
     }
     displayChallenges(challenges, type === 'my');
   } catch (error) {
@@ -325,7 +324,7 @@ async function handleCreateChallenge(e) {
   };
 
   try {
-    await client.mutation(api.challenges.create, challengeData);
+    await client.mutation("challenges:create", challengeData);
     
     if (tg) {
       tg.showAlert('Челлендж создан! Ставка заморожена. 🎉');
@@ -357,7 +356,7 @@ window.completeChallenge = async function(id) {
   if (!confirmed) return;
 
   try {
-    await client.mutation(api.challenges.complete, {
+    await client.mutation("challenges:complete", {
       challengeId: id,
       userId: currentUser.id
     });
@@ -390,7 +389,7 @@ window.failChallenge = async function(id) {
   if (!confirmed) return;
 
   try {
-    await client.mutation(api.challenges.fail, {
+    await client.mutation("challenges:fail", {
       challengeId: id,
       userId: currentUser.id
     });
@@ -434,7 +433,7 @@ async function handleAddProgress(e) {
   };
 
   try {
-    await client.mutation(api.challenges.addProgress, progressData);
+    await client.mutation("challenges:addProgress", progressData);
     
     if (tg) {
       tg.showAlert('Прогресс добавлен! 🎉');
@@ -461,7 +460,7 @@ async function handleAddBalance(e) {
   const amount = parseFloat(document.getElementById('balance-amount').value);
 
   try {
-    await client.mutation(api.users.addBalance, {
+    await client.mutation("users:addBalance", {
       userId: currentUser.id,
       amount
     });
