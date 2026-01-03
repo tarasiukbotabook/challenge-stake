@@ -99,7 +99,12 @@
         </div>
 
         <!-- Feed List -->
-        <div id="feed-list"></div>
+        <div id="feed-list">
+          <div style="text-align: center; padding: 40px; opacity: 0.5;">
+            <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+            <div>Загрузка...</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -148,11 +153,13 @@
         </svg>
         <span class="nav-label">Лента</span>
       </button>
-      <button class="nav-btn" onclick="showAddReportModal()">
-        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 20h9"></path>
-          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-        </svg>
+      <button class="nav-btn nav-btn-add" onclick="showAddReportDirect()">
+        <div class="nav-icon-add">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
         <span class="nav-label">Отчёт</span>
       </button>
     </div>

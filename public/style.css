@@ -403,6 +403,7 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-around;
+  align-items: flex-end;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   z-index: 100;
 }
@@ -432,6 +433,31 @@ body {
 .nav-icon {
   stroke: rgba(255, 255, 255, 0.5);
   transition: stroke 0.2s;
+}
+
+.nav-btn-add {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.nav-icon-add {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  transition: transform 0.2s;
+}
+
+.nav-btn-add:active .nav-icon-add {
+  transform: scale(0.95);
+}
+
+.nav-icon-add svg {
+  stroke: white;
 }
 
 .nav-label {

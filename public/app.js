@@ -116,26 +116,26 @@ function switchScreen(screenName) {
   console.log('=== switchScreen called:', screenName);
   
   const screens = document.querySelectorAll('.screen');
-  const navBtns = document.querySelectorAll('.nav-btn');
+  const navBtns = document.querySelectorAll('.nav-btn:not(.nav-btn-add)');
   
   screens.forEach(screen => screen.classList.remove('active'));
   navBtns.forEach(btn => btn.classList.remove('active'));
   
-  document.getElementById(`${screenName}-screen`).classList.add('active');
+  const targetScreen = document.getElementById(`${screenName}-screen`);
+  if (targetScreen) {
+    targetScreen.classList.add('active');
+  }
   
   // Update active nav button
   const activeIndex = { main: 0, feed: 1 }[screenName];
-  if (activeIndex !== undefined) {
+  if (activeIndex !== undefined && navBtns[activeIndex]) {
     navBtns[activeIndex].classList.add('active');
   }
   
   // Load data for feed screen - показываем отчёты по умолчанию
   if (screenName === 'feed') {
-    console.log('Loading feed reports...');
-    // Используем setTimeout чтобы дать время DOM обновиться
-    setTimeout(() => {
-      showFeedReports();
-    }, 100);
+    console.log('Loading feed reports immediately...');
+    showFeedReports();
   }
   
   if (tg) {
@@ -618,8 +618,8 @@ window.showDonateModal = function(challengeId) {
   }
 }
 
-// Показать модальное окно добавления отчёта
-window.showAddReportModal = async function() {
+// Показать модальное окно добавления отчёта напрямую (без модалки)
+window.showAddReportDirect = async function() {
   if (!currentUser) {
     showToast('Необходима авторизация', 'error');
     return;
@@ -630,13 +630,12 @@ window.showAddReportModal = async function() {
     const challenges = await client.query("challenges:getMy", { userId: currentUser.id });
     const activeChallenges = challenges.filter(c => c.status === 'active');
     
-    const select = document.getElementById('report-challenge');
     if (activeChallenges.length === 0) {
-      select.innerHTML = '<option value="">У вас нет активных челленджей</option>';
       showToast('Сначала создайте челлендж', 'info');
       return;
     }
     
+    const select = document.getElementById('report-challenge');
     select.innerHTML = '<option value="">Выберите челлендж</option>' + 
       activeChallenges.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
     
