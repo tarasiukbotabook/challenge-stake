@@ -15,6 +15,10 @@ export const create = mutation({
     const user = await ctx.db.get(args.userId);
     if (!user) throw new Error("Пользователь не найден");
 
+    if (args.stakeAmount < 1) {
+      throw new Error("Минимальная ставка - $1");
+    }
+
     if (user.balance < args.stakeAmount) {
       throw new Error("Недостаточно средств на балансе");
     }
