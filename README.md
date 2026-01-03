@@ -2,6 +2,11 @@
 
 <div align="center">
 
+![GitHub stars](https://img.shields.io/github/stars/tarasiukbotabook/challenge-stake?style=social)
+![GitHub forks](https://img.shields.io/github/forks/tarasiukbotabook/challenge-stake?style=social)
+![GitHub issues](https://img.shields.io/github/issues/tarasiukbotabook/challenge-stake)
+![GitHub license](https://img.shields.io/github/license/tarasiukbotabook/challenge-stake)
+
 ![Challenge Stake](https://img.shields.io/badge/Challenge-Stake-blueviolet?style=for-the-badge)
 ![Telegram](https://img.shields.io/badge/Telegram-Mini%20App-blue?style=for-the-badge&logo=telegram)
 ![Convex](https://img.shields.io/badge/Convex-Serverless-orange?style=for-the-badge)
@@ -9,7 +14,7 @@
 
 **Достигай целей публично с денежными ставками в Telegram!**
 
-[🚀 Демо](https://challenge-stake.vercel.app) • [📱 Telegram Bot](https://t.me/challenge_stake_bot) • [📚 Документация](./START_HERE.md)
+[🚀 GitHub](https://github.com/tarasiukbotabook/challenge-stake) • [📱 Telegram Bot](https://t.me/challenge_stake_bot) • [📚 Документация](./START_HERE.md)
 
 </div>
 
@@ -43,7 +48,7 @@
 
 ```bash
 # Клонируйте репозиторий
-git clone https://github.com/YOUR_USERNAME/challenge-stake.git
+git clone https://github.com/tarasiukbotabook/challenge-stake.git
 cd challenge-stake
 
 # Установите зависимости
@@ -182,8 +187,8 @@ MIT License - см. [LICENSE](LICENSE)
 ## 📞 Контакты
 
 - **Telegram**: [@challenge_stake_bot](https://t.me/challenge_stake_bot)
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/challenge-stake/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/challenge-stake/discussions)
+- **Issues**: [GitHub Issues](https://github.com/tarasiukbotabook/challenge-stake/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tarasiukbotabook/challenge-stake/discussions)
 
 ---
 
