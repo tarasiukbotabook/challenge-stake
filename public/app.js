@@ -968,17 +968,25 @@ window.showFeedReports = async function() {
       console.log('Rendering reports...');
       feedList.innerHTML = reports.map((report, index) => {
         const date = new Date(report._creationTime);
+        const dateStr = date.toLocaleDateString('ru-RU');
+        const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        
+        // Аватарка: если есть photoUrl - показываем фото, иначе - первую букву
+        const avatarHtml = report.photoUrl 
+          ? `<img src="${report.photoUrl}" alt="${report.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+          : (report.firstName || report.username).charAt(0).toUpperCase();
+        
         return `
           <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s">
             <div class="report-header">
               <div class="report-user">
-                <div class="report-avatar">${(report.firstName || report.username).charAt(0).toUpperCase()}</div>
+                <div class="report-avatar">${avatarHtml}</div>
                 <div>
-                  <div class="report-username">${report.firstName || report.username}</div>
+                  <div class="report-username">@${report.username}</div>
                   <div class="report-challenge">${report.challengeTitle}</div>
                 </div>
               </div>
-              <div class="report-date">${date.toLocaleDateString('ru-RU')}</div>
+              <div class="report-date">${dateStr}<br><span style="font-size: 12px; opacity: 0.7;">${timeStr}</span></div>
             </div>
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}

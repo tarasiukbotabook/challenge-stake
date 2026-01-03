@@ -266,6 +266,7 @@ export const getAllReports = query({
           ...report,
           username: user?.username || "Unknown",
           firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
           challengeTitle: challenge?.title || "Unknown",
         };
       })

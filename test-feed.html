@@ -72,6 +72,7 @@
         _creationTime: Date.now(),
         firstName: 'Иван',
         username: 'ivan123',
+        photoUrl: 'https://i.pravatar.cc/150?img=12',
         challengeTitle: 'Пробежать 50км за месяц',
         content: 'Сегодня пробежал 5км! Чувствую себя отлично 💪',
         imageUrl: null,
@@ -82,10 +83,22 @@
         _creationTime: Date.now() - 3600000,
         firstName: 'Мария',
         username: 'maria456',
+        photoUrl: 'https://i.pravatar.cc/150?img=5',
         challengeTitle: 'Читать по 30 минут каждый день',
         content: 'Прочитала 2 главы книги "Атомные привычки"',
         imageUrl: null,
         socialLink: 'https://t.me/test'
+      },
+      {
+        _id: '3',
+        _creationTime: Date.now() - 7200000,
+        firstName: 'Алексей',
+        username: 'alex789',
+        photoUrl: '',
+        challengeTitle: 'Медитация каждый день',
+        content: 'Медитировал 15 минут утром',
+        imageUrl: null,
+        socialLink: null
       }
     ];
 
@@ -142,14 +155,30 @@
       } else {
         feedList.innerHTML = reports.map((report, index) => {
           const date = new Date(report._creationTime);
+          const dateStr = date.toLocaleDateString('ru-RU');
+          const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          
+          // Аватарка: если есть photoUrl - показываем фото, иначе - первую букву
+          const avatarHtml = report.photoUrl 
+            ? `<img src="${report.photoUrl}" alt="${report.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+            : (report.firstName || report.username).charAt(0).toUpperCase();
+          
           return `
             <div class="report-card">
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <div>
-                  <div style="font-weight: 600;">${report.firstName || report.username}</div>
-                  <div style="opacity: 0.6; font-size: 14px;">${report.challengeTitle}</div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; overflow: hidden; flex-shrink: 0;">
+                    ${avatarHtml}
+                  </div>
+                  <div>
+                    <div style="font-weight: 600;">@${report.username}</div>
+                    <div style="opacity: 0.6; font-size: 14px;">${report.challengeTitle}</div>
+                  </div>
                 </div>
-                <div style="opacity: 0.6; font-size: 14px;">${date.toLocaleDateString('ru-RU')}</div>
+                <div style="opacity: 0.6; font-size: 14px; text-align: right;">
+                  ${dateStr}<br>
+                  <span style="font-size: 12px; opacity: 0.7;">${timeStr}</span>
+                </div>
               </div>
               <div>${report.content}</div>
               ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" style="color: #10b981; margin-top: 8px; display: inline-block;">Посмотреть пост →</a>` : ''}

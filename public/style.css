@@ -715,6 +715,8 @@ form {
   justify-content: center;
   font-weight: 600;
   font-size: 16px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .report-username {
