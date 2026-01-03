@@ -344,10 +344,17 @@ async function loadStats() {
   try {
     const stats = await client.query("users:getUserStats", { userId: currentUser.id });
     
+    // Обновляем значения
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
     document.getElementById('stat-active').textContent = stats.active;
     document.getElementById('user-balance').textContent = `${stats.balance}₽`;
+    
+    // Показываем статистику с анимацией
+    const statsEl = document.getElementById('stats-compact');
+    if (statsEl) {
+      statsEl.style.opacity = '1';
+    }
     
     // Анимация чисел
     animateValue('stat-total', 0, stats.total, 800);
@@ -379,6 +386,16 @@ function animateValue(id, start, end, duration) {
 async function loadChallenges(type) {
   if (!currentUser) return;
   
+  const container = document.getElementById('challenges-list');
+  
+  // Показываем индикатор загрузки
+  container.innerHTML = `
+    <div style="text-align: center; padding: 40px; opacity: 0.5;">
+      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка...</div>
+    </div>
+  `;
+  
   try {
     let challenges;
     if (type === 'my') {
@@ -389,6 +406,12 @@ async function loadChallenges(type) {
     displayChallenges(challenges, type === 'my');
   } catch (error) {
     console.error('Ошибка загрузки челленджей:', error);
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-text">Ошибка загрузки</div>
+      </div>
+    `;
   }
 }
 
