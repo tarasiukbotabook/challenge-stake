@@ -620,6 +620,23 @@ window.showDonateModal = function(challengeId) {
   }
 }
 
+// Показать модальное окно доната из отчёта
+window.showDonateModalFromReport = function(challengeId, username) {
+  currentChallengeId = challengeId;
+  
+  // Обновляем заголовок модального окна
+  const modalTitle = document.querySelector('#donate-modal .modal-title');
+  if (modalTitle) {
+    modalTitle.textContent = `Поддержать @${username}`;
+  }
+  
+  document.getElementById('donate-modal').classList.add('active');
+  if (tg) {
+    tg.BackButton.show();
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
 // Показать экран добавления отчёта
 window.showAddReportDirect = async function() {
   if (!currentUser) {
@@ -778,12 +795,28 @@ async function handleDonate(e) {
     
     closeModal('donate-modal');
     e.target.reset();
+    
+    // Сбрасываем заголовок модального окна
+    const modalTitle = document.querySelector('#donate-modal .modal-title');
+    if (modalTitle) {
+      modalTitle.textContent = 'Поддержать челлендж';
+    }
+    
     await loadStats();
     
-    // Обновляем список челленджей
-    const feedList = document.getElementById('feed-list');
-    if (feedList && feedList.innerHTML) {
-      await loadChallenges('all');
+    // Обновляем ленту если мы на ней
+    const feedScreen = document.getElementById('feed-screen');
+    if (feedScreen && feedScreen.classList.contains('active')) {
+      const feedList = document.getElementById('feed-list');
+      // Проверяем, что отображается - отчёты или челленджи
+      const reportCards = feedList.querySelectorAll('.report-card');
+      if (reportCards.length > 0) {
+        // Обновляем отчёты
+        await showFeedReports();
+      } else {
+        // Обновляем челленджи
+        await loadChallenges('all');
+      }
     }
   } catch (error) {
     console.error('Ошибка доната:', error);
@@ -975,6 +1008,9 @@ window.showFeedReports = async function() {
           ? `<img src="${report.photoUrl}" alt="${report.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
           : (report.firstName || report.username).charAt(0).toUpperCase();
         
+        // Проверяем, это не наш отчёт
+        const canDonate = currentUser && report.userId !== currentUser.id;
+        
         return `
           <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s">
             <div class="report-header">
@@ -989,7 +1025,10 @@ window.showFeedReports = async function() {
             </div>
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
-            ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
+            <div style="display: flex; gap: 12px; margin-top: 12px; align-items: center;">
+              ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
+              ${canDonate ? `<button class="btn btn-sm btn-primary" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')" style="margin-left: auto;">💰 Поддержать</button>` : ''}
+            </div>
           </div>
         `;
       }).join('');
@@ -1064,16 +1103,22 @@ window.showUserProfile = async function(userId) {
   
   try {
     // Загружаем данные пользователя
+    console.log('Loading user stats for:', userId);
     const stats = await client.query("users:getUserStats", { userId });
-    const challenges = await client.query("challenges:getMy", { userId });
+    console.log('Stats received:', stats);
     
-    // Получаем информацию о пользователе из первого челленджа или stats
+    const challenges = await client.query("challenges:getMy", { userId });
+    console.log('Challenges received:', challenges.length);
+    
+    // Получаем информацию о пользователе из stats
     const user = {
       username: stats.username || 'Unknown',
       firstName: stats.firstName || '',
       photoUrl: stats.photoUrl || '',
       balance: stats.balance
     };
+    
+    console.log('User data:', user);
     
     // Аватарка
     const avatarHtml = user.photoUrl 
