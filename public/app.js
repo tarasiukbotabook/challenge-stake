@@ -113,6 +113,8 @@ function hideLoading() {
 
 // Screen navigation
 function switchScreen(screenName) {
+  console.log('=== switchScreen called:', screenName);
+  
   const screens = document.querySelectorAll('.screen');
   const navBtns = document.querySelectorAll('.nav-btn');
   
@@ -129,7 +131,11 @@ function switchScreen(screenName) {
   
   // Load data for feed screen - показываем отчёты по умолчанию
   if (screenName === 'feed') {
-    showFeedReports();
+    console.log('Loading feed reports...');
+    // Используем setTimeout чтобы дать время DOM обновиться
+    setTimeout(() => {
+      showFeedReports();
+    }, 100);
   }
   
   if (tg) {
@@ -807,11 +813,16 @@ async function handleAddReport(e) {
 
 // UI функции
 window.showChallenges = function(type) {
+  console.log('=== showChallenges called:', type);
+  
   if (type === 'all') {
-    // В ленте
+    // В ленте - переключаем на вкладку "Все челленджи"
     const tabs = document.querySelectorAll('#feed-screen .tab-btn');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    tabs[1].classList.add('active');
+    if (tabs.length >= 2) {
+      tabs.forEach(tab => tab.classList.remove('active'));
+      tabs[1].classList.add('active'); // Вторая вкладка
+      console.log('Switched to "Все челленджи" tab');
+    }
   }
   
   if (tg) tg.HapticFeedback.impactOccurred('light');
@@ -823,8 +834,11 @@ window.showFeedReports = async function() {
   console.log('=== showFeedReports called ===');
   
   const tabs = document.querySelectorAll('#feed-screen .tab-btn');
-  tabs.forEach(tab => tab.classList.remove('active'));
-  tabs[0].classList.add('active');
+  if (tabs.length >= 2) {
+    tabs.forEach(tab => tab.classList.remove('active'));
+    tabs[0].classList.add('active'); // Первая вкладка
+    console.log('Switched to "Отчёты" tab');
+  }
   
   const feedList = document.getElementById('feed-list');
   
@@ -844,7 +858,7 @@ window.showFeedReports = async function() {
   try {
     console.log('Fetching reports...');
     const reports = await client.query("challenges:getAllReports", {});
-    console.log('Reports received:', reports.length);
+    console.log('Reports received:', reports.length, reports);
     
     if (reports.length === 0) {
       feedList.innerHTML = `
