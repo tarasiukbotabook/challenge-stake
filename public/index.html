@@ -19,7 +19,7 @@
   
   <div id="app" style="display: none;">
     <!-- Main Screen -->
-    <div id="main-screen" class="screen active">
+    <div id="main-screen" class="screen">
       <div class="header">
         <div class="user-avatar" id="user-avatar">
           🎯
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Feed Screen -->
-    <div id="feed-screen" class="screen">
+    <div id="feed-screen" class="screen active">
       <div class="header">
         <h1>Лента</h1>
       </div>
@@ -200,12 +200,14 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-      <button class="nav-btn active" onclick="switchScreen('main')">
+      <button class="nav-btn active" onclick="switchScreen('feed')">
         <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
-        <span class="nav-label">Профиль</span>
+        <span class="nav-label">Лента</span>
       </button>
       <button class="nav-btn nav-btn-add" onclick="showAddReportDirect()">
         <div class="nav-icon-add">
@@ -215,9 +217,14 @@
           </svg>
         </div>
       </button>
-      <button class="nav-btn" onclick="switchScreen('feed')">
+      <button class="nav-btn" onclick="switchScreen('main')">
         <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"></rect>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span class="nav-label">Профиль</span>
+      </button>
+    </div>
           <rect x="14" y="3" width="7" height="7"></rect>
           <rect x="14" y="14" width="7" height="7"></rect>
           <rect x="3" y="14" width="7" height="7"></rect>

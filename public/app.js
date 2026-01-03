@@ -127,7 +127,7 @@ function switchScreen(screenName) {
   }
   
   // Update active nav button
-  const activeIndex = { main: 0, feed: 2 }[screenName];
+  const activeIndex = { feed: 0, main: 2 }[screenName];
   if (activeIndex !== undefined && navBtns[activeIndex]) {
     navBtns[activeIndex].classList.add('active');
   }
@@ -272,6 +272,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadUserData(); // Ждем пока данные загрузятся
       console.log('Updating greeting...');
       updateGreeting();
+      
+      // Загружаем ленту по умолчанию
+      console.log('Loading feed...');
+      switchScreen('feed');
     } else {
       // Если не в Telegram, показываем заглушку
       if (!isTelegram) {
@@ -482,14 +486,8 @@ function displayChallenges(challenges, isMine, container) {
 
     const actions = isMine && challenge.status === 'active' ? `
       <div class="challenge-actions">
-        <button class="btn btn-sm btn-primary" onclick="window.showProgressModal('${challenge._id}')">
-          Прогресс
-        </button>
-        <button class="btn btn-sm btn-success" onclick="window.completeChallenge('${challenge._id}')">
-          Выполнен
-        </button>
-        <button class="btn btn-sm btn-danger" onclick="window.failChallenge('${challenge._id}')">
-          Провален
+        <button class="btn btn-sm btn-primary" onclick="window.showChallengeDetail('${challenge._id}')">
+          Открыть
         </button>
       </div>
     ` : !isMine && challenge.status === 'active' ? `
