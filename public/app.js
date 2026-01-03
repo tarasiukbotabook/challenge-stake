@@ -54,6 +54,7 @@ async function autoLogin() {
     
     currentUser = user;
     localStorage.setItem('user', JSON.stringify(currentUser));
+    console.log('Login successful:', user);
     return true;
   } catch (error) {
     console.log('User not found, registering...', error);
@@ -65,21 +66,24 @@ async function autoLogin() {
         username: telegramUser.username || `user${telegramUser.id}`,
         firstName: telegramUser.first_name || '',
         lastName: telegramUser.last_name || '',
+        photoUrl: telegramUser.photo_url || undefined,
       });
       
       currentUser = result;
       localStorage.setItem('user', JSON.stringify(currentUser));
       
+      console.log('Registration successful:', result);
+      
       // Показываем приветствие
       if (tg) {
-        tg.showAlert(`Добро пожаловать, ${telegramUser.first_name}! 🎉`);
+        tg.showAlert(`Добро пожаловать, ${telegramUser.first_name}! 🎉\n\nВы получили стартовый бонус 1000₽!`);
       }
       
       return true;
     } catch (regError) {
       console.error('Registration failed:', regError);
       if (tg) {
-        tg.showAlert('Ошибка регистрации. Попробуйте позже.');
+        tg.showAlert('Ошибка регистрации: ' + regError.message);
       }
       return false;
     }
@@ -88,9 +92,6 @@ async function autoLogin() {
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async () => {
-  // Создаем анимированный фон
-  createParticles();
-  
   // Инициализируем Telegram
   const isTelegram = initTelegram();
   
@@ -111,27 +112,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
 });
 
-// Создание анимированных частиц
-function createParticles() {
-  const bg = document.querySelector('.animated-bg');
-  for (let i = 0; i < 20; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.width = Math.random() * 100 + 50 + 'px';
-    particle.style.height = particle.style.width;
-    particle.style.left = Math.random() * 100 + '%';
-    particle.style.top = Math.random() * 100 + '%';
-    particle.style.animationDelay = Math.random() * 20 + 's';
-    particle.style.background = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
-    bg.appendChild(particle);
-  }
-}
-
-// Обновление приветствия
+// Обновление приветствия и аватарки
 function updateGreeting() {
   if (tg?.initDataUnsafe?.user) {
-    const firstName = tg.initDataUnsafe.user.first_name;
+    const user = tg.initDataUnsafe.user;
+    const firstName = user.first_name || 'Пользователь';
+    const lastName = user.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // Обновляем имя
+    document.getElementById('user-name').textContent = fullName;
     document.getElementById('user-greeting').textContent = `Привет, ${firstName}! 👋`;
+    
+    // Обновляем аватарку
+    const avatarEl = document.getElementById('user-avatar');
+    
+    // Пытаемся получить фото профиля через Telegram API
+    if (user.photo_url) {
+      avatarEl.innerHTML = `<img src="${user.photo_url}" alt="${fullName}">`;
+    } else {
+      // Если нет фото, показываем инициалы
+      const initials = (firstName.charAt(0) + (lastName.charAt(0) || '')).toUpperCase();
+      avatarEl.textContent = initials;
+    }
+    
+    console.log('User data updated:', { fullName, user });
+  } else {
+    console.log('No Telegram user data available');
   }
 }
 

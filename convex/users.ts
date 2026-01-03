@@ -8,6 +8,7 @@ export const registerTelegram = mutation({
     username: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -24,6 +25,7 @@ export const registerTelegram = mutation({
       username: args.username,
       firstName: args.firstName,
       lastName: args.lastName,
+      photoUrl: args.photoUrl,
       balance: 1000, // Стартовый бонус
       premium: false,
     });
@@ -31,6 +33,9 @@ export const registerTelegram = mutation({
     return {
       id: userId,
       username: args.username,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      photoUrl: args.photoUrl,
       balance: 1000,
       premium: false,
     };
@@ -55,6 +60,9 @@ export const loginTelegram = query({
     return {
       id: user._id,
       username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      photoUrl: user.photoUrl,
       balance: user.balance,
       premium: user.premium,
     };

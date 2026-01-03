@@ -9,6 +9,7 @@ export default defineSchema({
     telegramId: v.optional(v.string()),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
+    photoUrl: v.optional(v.string()),
     balance: v.number(),
     premium: v.boolean(),
   }).index("by_email", ["email"])
