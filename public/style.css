@@ -930,19 +930,6 @@ form {
   overflow: hidden;
 }
 
-.profile-username {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #8b5cf6;
-}
-
-.profile-name {
-  font-size: 16px;
-  opacity: 0.7;
-  margin-bottom: 8px;
-}
-
 .report-user-info {
   flex: 1;
   min-width: 0;
