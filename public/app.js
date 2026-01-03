@@ -969,7 +969,6 @@ window.showFeedReports = async function() {
       feedList.innerHTML = reports.map((report, index) => {
         const date = new Date(report._creationTime);
         const dateStr = date.toLocaleDateString('ru-RU');
-        const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         
         // Аватарка: если есть photoUrl - показываем фото, иначе - первую букву
         const avatarHtml = report.photoUrl 
@@ -981,12 +980,12 @@ window.showFeedReports = async function() {
             <div class="report-header">
               <div class="report-user">
                 <div class="report-avatar">${avatarHtml}</div>
-                <div>
-                  <div class="report-username">@${report.username}</div>
+                <div class="report-user-info">
+                  <div class="report-username" onclick="showUserProfile('${report.userId}')">@${report.username}</div>
                   <div class="report-challenge">${report.challengeTitle}</div>
+                  <div class="report-date">${dateStr}</div>
                 </div>
               </div>
-              <div class="report-date">${dateStr}<br><span style="font-size: 12px; opacity: 0.7;">${timeStr}</span></div>
             </div>
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
@@ -1038,6 +1037,115 @@ window.showAddBalance = function() {
 
 window.closeModal = function(modalId) {
   document.getElementById(modalId).classList.remove('active');
+  if (tg) {
+    tg.BackButton.hide();
+  }
+}
+
+// Показать профиль пользователя
+window.showUserProfile = async function(userId) {
+  console.log('=== showUserProfile called:', userId);
+  
+  // Скрываем нижнее меню
+  document.querySelector('.bottom-nav').style.display = 'none';
+  
+  // Показываем экран профиля
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('user-profile-screen').classList.add('active');
+  
+  // Показываем загрузку
+  const profileContent = document.getElementById('profile-content');
+  profileContent.innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка профиля...</div>
+    </div>
+  `;
+  
+  try {
+    // Загружаем данные пользователя
+    const stats = await client.query("users:getUserStats", { userId });
+    const challenges = await client.query("challenges:getMy", { userId });
+    
+    // Получаем информацию о пользователе из первого челленджа или stats
+    const user = {
+      username: stats.username || 'Unknown',
+      firstName: stats.firstName || '',
+      photoUrl: stats.photoUrl || '',
+      balance: stats.balance
+    };
+    
+    // Аватарка
+    const avatarHtml = user.photoUrl 
+      ? `<img src="${user.photoUrl}" alt="${user.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+      : (user.firstName || user.username).charAt(0).toUpperCase();
+    
+    profileContent.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${avatarHtml}</div>
+        <h2 class="profile-username">@${user.username}</h2>
+        ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+      </div>
+      
+      <div class="stats-compact" style="opacity: 1; margin: 20px 0;">
+        <div class="stat-item">
+          <div class="stat-number">${stats.total}</div>
+          <div class="stat-text">Всего</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">${stats.completed}</div>
+          <div class="stat-text">Выполнено</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">${stats.active}</div>
+          <div class="stat-text">Активных</div>
+        </div>
+      </div>
+      
+      <div style="padding: 0 16px;">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Челленджи</h3>
+        <div id="user-challenges-list"></div>
+      </div>
+    `;
+    
+    // Отображаем челленджи
+    const challengesList = document.getElementById('user-challenges-list');
+    if (challenges.length === 0) {
+      challengesList.innerHTML = `
+        <div class="empty-state">
+          <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">🎯</div>
+          <div class="empty-text">Пока нет челленджей</div>
+        </div>
+      `;
+    } else {
+      displayChallenges(challenges, false, challengesList);
+    }
+    
+  } catch (error) {
+    console.error('Ошибка загрузки профиля:', error);
+    profileContent.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
+        <div class="empty-text">Ошибка загрузки профиля</div>
+        <p style="opacity: 0.6; margin-top: 8px;">${error.message}</p>
+      </div>
+    `;
+  }
+  
+  if (tg) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(closeUserProfile);
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
+// Закрыть профиль пользователя
+window.closeUserProfile = function() {
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  switchScreen('feed');
+  
   if (tg) {
     tg.BackButton.hide();
   }

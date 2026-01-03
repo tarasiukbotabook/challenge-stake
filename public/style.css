@@ -694,15 +694,14 @@ form {
 
 .report-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 12px;
 }
 
 .report-user {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  flex: 1;
 }
 
 .report-avatar {
@@ -731,8 +730,9 @@ form {
 }
 
 .report-date {
-  font-size: 13px;
+  font-size: 12px;
   opacity: 0.5;
+  margin-top: 4px;
 }
 
 .report-content {
@@ -758,4 +758,51 @@ form {
 
 .report-link:hover {
   text-decoration: underline;
+}
+
+/* User Profile */
+.profile-header {
+  text-align: center;
+  padding: 40px 20px 20px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 40px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+}
+
+.profile-username {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #8b5cf6;
+}
+
+.profile-name {
+  font-size: 16px;
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+
+.report-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-username {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.report-username:hover {
+  color: #8b5cf6;
 }

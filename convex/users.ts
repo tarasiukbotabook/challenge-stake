@@ -189,6 +189,9 @@ export const getUserStats = query({
       active,
       balance: user.balance,
       premium: user.premium,
+      username: user.username,
+      firstName: user.firstName || "",
+      photoUrl: user.photoUrl || "",
     };
   },
 });
