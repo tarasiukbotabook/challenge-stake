@@ -1,7 +1,57 @@
-import { ConvexHttpClient } from "https://cdn.jsdelivr.net/npm/convex@1.31.2/+esm";
-
 const CONVEX_URL = "https://greedy-badger-196.convex.cloud";
-const client = new ConvexHttpClient(CONVEX_URL);
+
+// Simple Convex client using fetch
+const client = {
+  async query(functionName, args) {
+    const response = await fetch(`${CONVEX_URL}/api/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path: functionName,
+        args: args || {},
+        format: 'json',
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Query failed');
+    }
+    
+    const data = await response.json();
+    if (data.status === 'error') {
+      throw new Error(data.errorMessage || 'Query failed');
+    }
+    return data.value;
+  },
+  
+  async mutation(functionName, args) {
+    const response = await fetch(`${CONVEX_URL}/api/mutation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path: functionName,
+        args: args || {},
+        format: 'json',
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Mutation failed');
+    }
+    
+    const data = await response.json();
+    if (data.status === 'error') {
+      throw new Error(data.errorMessage || 'Mutation failed');
+    }
+    return data.value;
+  },
+};
 
 let currentUser = null;
 let currentChallengeId = null;
