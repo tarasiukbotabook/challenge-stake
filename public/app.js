@@ -127,7 +127,7 @@ function switchScreen(screenName) {
   }
   
   // Update active nav button
-  const activeIndex = { main: 0, feed: 1 }[screenName];
+  const activeIndex = { main: 0, feed: 2 }[screenName];
   if (activeIndex !== undefined && navBtns[activeIndex]) {
     navBtns[activeIndex].classList.add('active');
   }
