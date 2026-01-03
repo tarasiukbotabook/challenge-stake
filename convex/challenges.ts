@@ -151,6 +151,7 @@ export const addProgress = mutation({
     userId: v.id("users"),
     content: v.string(),
     socialLink: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const updateId = await ctx.db.insert("progressUpdates", {
@@ -158,6 +159,7 @@ export const addProgress = mutation({
       userId: args.userId,
       content: args.content,
       socialLink: args.socialLink,
+      imageUrl: args.imageUrl,
     });
 
     return { updateId };
@@ -241,6 +243,30 @@ export const getDonations = query({
           ...donation,
           donorUsername: donor?.username || "Anonymous",
           donorFirstName: donor?.firstName || "",
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+export const getAllReports = query({
+  handler: async (ctx) => {
+    const reports = await ctx.db
+      .query("progressUpdates")
+      .order("desc")
+      .take(50);
+
+    const enriched = await Promise.all(
+      reports.map(async (report) => {
+        const user = await ctx.db.get(report.userId);
+        const challenge = await ctx.db.get(report.challengeId);
+        return {
+          ...report,
+          username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          challengeTitle: challenge?.title || "Unknown",
         };
       })
     );

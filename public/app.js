@@ -333,6 +333,10 @@ function setupEventListeners() {
   document.getElementById('add-balance-form').addEventListener('submit', handleAddBalance);
   document.getElementById('add-progress-form').addEventListener('submit', handleAddProgress);
   document.getElementById('donate-form').addEventListener('submit', handleDonate);
+  document.getElementById('add-report-form').addEventListener('submit', handleAddReport);
+  
+  // Превью фото
+  document.getElementById('report-photo').addEventListener('change', handlePhotoPreview);
 }
 
 // Загрузка данных пользователя
@@ -600,6 +604,57 @@ window.showDonateModal = function(challengeId) {
   }
 }
 
+// Показать модальное окно добавления отчёта
+window.showAddReportModal = async function() {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  // Загружаем активные челленджи пользователя
+  try {
+    const challenges = await client.query("challenges:getMy", { userId: currentUser.id });
+    const activeChallenges = challenges.filter(c => c.status === 'active');
+    
+    const select = document.getElementById('report-challenge');
+    if (activeChallenges.length === 0) {
+      select.innerHTML = '<option value="">У вас нет активных челленджей</option>';
+      showToast('Сначала создайте челлендж', 'info');
+      return;
+    }
+    
+    select.innerHTML = '<option value="">Выберите челлендж</option>' + 
+      activeChallenges.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
+    
+    document.getElementById('add-report-modal').classList.add('active');
+    if (tg) {
+      tg.BackButton.show();
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки челленджей:', error);
+    showToast('Ошибка загрузки челленджей', 'error');
+  }
+}
+
+// Превью фото
+function handlePhotoPreview(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('photo-preview');
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = `
+        <img src="${e.target.result}" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">
+      `;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = '';
+  }
+}
+
 // Добавление прогресса
 async function handleAddProgress(e) {
   e.preventDefault();
@@ -684,17 +739,137 @@ async function handleDonate(e) {
   }
 }
 
+// Добавление отчёта
+async function handleAddReport(e) {
+  e.preventDefault();
+  
+  if (!currentUser) return;
+
+  const challengeId = document.getElementById('report-challenge').value;
+  if (!challengeId) {
+    showToast('Выберите челлендж', 'error');
+    return;
+  }
+
+  const content = document.getElementById('report-content').value;
+  const socialLink = document.getElementById('report-link').value || undefined;
+  const photoFile = document.getElementById('report-photo').files[0];
+  
+  let imageUrl = undefined;
+  
+  // Если есть фото, конвертируем в base64 (для простоты, в продакшене лучше использовать хранилище)
+  if (photoFile) {
+    try {
+      imageUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(photoFile);
+      });
+    } catch (error) {
+      console.error('Ошибка загрузки фото:', error);
+      showToast('Ошибка загрузки фото', 'error');
+      return;
+    }
+  }
+
+  try {
+    await client.mutation("challenges:addProgress", {
+      challengeId,
+      userId: currentUser.id,
+      content,
+      socialLink,
+      imageUrl
+    });
+    
+    showToast('Отчёт опубликован!', 'success', 'Отлично! 🎉');
+    
+    closeModal('add-report-modal');
+    e.target.reset();
+    document.getElementById('photo-preview').innerHTML = '';
+    
+    // Переключаемся на ленту с отчётами
+    switchScreen('feed');
+    showFeedReports();
+  } catch (error) {
+    console.error('Ошибка добавления отчёта:', error);
+    showToast(error.message || 'Ошибка добавления отчёта', 'error');
+  }
+}
+
 // UI функции
 window.showChallenges = function(type) {
   if (type === 'all') {
     // В ленте
     const tabs = document.querySelectorAll('#feed-screen .tab-btn');
     tabs.forEach(tab => tab.classList.remove('active'));
-    tabs[0].classList.add('active');
+    tabs[1].classList.add('active');
   }
   
   if (tg) tg.HapticFeedback.impactOccurred('light');
   loadChallenges(type);
+}
+
+// Показать отчёты в ленте
+window.showFeedReports = async function() {
+  const tabs = document.querySelectorAll('#feed-screen .tab-btn');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  tabs[0].classList.add('active');
+  
+  const feedList = document.getElementById('feed-list');
+  
+  // Показываем индикатор загрузки
+  feedList.innerHTML = `
+    <div style="text-align: center; padding: 40px; opacity: 0.5;">
+      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка отчётов...</div>
+    </div>
+  `;
+  
+  try {
+    const reports = await client.query("challenges:getAllReports");
+    
+    if (reports.length === 0) {
+      feedList.innerHTML = `
+        <div class="empty-state">
+          <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📊</div>
+          <div class="empty-text">Пока нет отчётов</div>
+          <p style="opacity: 0.6; margin-top: 8px;">Будьте первым, кто опубликует отчёт о прогрессе!</p>
+        </div>
+      `;
+    } else {
+      feedList.innerHTML = reports.map((report, index) => {
+        const date = new Date(report._creationTime);
+        return `
+          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s">
+            <div class="report-header">
+              <div class="report-user">
+                <div class="report-avatar">${(report.firstName || report.username).charAt(0).toUpperCase()}</div>
+                <div>
+                  <div class="report-username">${report.firstName || report.username}</div>
+                  <div class="report-challenge">${report.challengeTitle}</div>
+                </div>
+              </div>
+              <div class="report-date">${date.toLocaleDateString('ru-RU')}</div>
+            </div>
+            <div class="report-content">${report.content}</div>
+            ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
+            ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки отчётов:', error);
+    feedList.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
+        <div class="empty-text">Ошибка загрузки отчётов</div>
+      </div>
+    `;
+  }
+  
+  if (tg) tg.HapticFeedback.impactOccurred('light');
 }
 
 // Показать отчёты в ленте
