@@ -321,10 +321,11 @@ function updateGreeting() {
     const firstName = user.first_name || 'Пользователь';
     const lastName = user.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim();
+    const username = user.username || 'user';
     
-    // Обновляем имя
+    // Обновляем имя и username
     document.getElementById('user-name').textContent = fullName;
-    document.getElementById('user-greeting').textContent = `Привет, ${firstName}! 👋`;
+    document.getElementById('user-username').textContent = `@${username}`;
     
     // Обновляем аватарку
     const avatarEl = document.getElementById('user-avatar');
@@ -338,7 +339,7 @@ function updateGreeting() {
       avatarEl.textContent = initials;
     }
     
-    console.log('User data updated:', { fullName, user });
+    console.log('User data updated:', { fullName, username, user });
   } else {
     console.log('No Telegram user data available');
   }
@@ -378,6 +379,7 @@ async function loadStats() {
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
     document.getElementById('stat-active').textContent = stats.active;
+    document.getElementById('stat-reports').textContent = stats.reports || 0;
     document.getElementById('user-balance').textContent = `$${stats.balance}`;
     
     // Показываем статистику с анимацией
@@ -390,6 +392,7 @@ async function loadStats() {
     animateValue('stat-total', 0, stats.total, 800);
     animateValue('stat-completed', 0, stats.completed, 800);
     animateValue('stat-active', 0, stats.active, 800);
+    animateValue('stat-reports', 0, stats.reports || 0, 800);
   } catch (error) {
     console.error('Ошибка загрузки статистики:', error);
   }
