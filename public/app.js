@@ -516,7 +516,7 @@ function displayChallenges(challenges, isMine, container) {
           <div class="challenge-stake-amount">
             <span class="currency">$</span>
             <span class="amount">${totalAmount}</span>
-            ${donationsAmount > 0 ? `<span class="challenge-stake-details">(${challenge.stakeAmount} + ${donationsAmount})</span>` : ''}
+            ${donationsAmount > 0 ? `<span class="challenge-stake-details" style="cursor: pointer;" onclick="event.stopPropagation(); showChallengeDonations('${challenge._id}')" title="Посмотреть донатеров">(${challenge.stakeAmount} + ${donationsAmount})</span>` : ''}
           </div>
           ${donateButton}
         </div>
@@ -1068,9 +1068,11 @@ window.showFeedReports = async function() {
         // Проверяем, это не наш отчёт
         const canDonate = currentUser && report.userId !== currentUser.id;
         
-        // Сумма донатов - всегда показываем
+        // Сумма донатов - всегда показываем, делаем кликабельной если есть донаты
         const donationsAmount = report.donationsAmount || 0;
-        const donationsText = `<div style="font-size: 12px; opacity: 0.6;">Собрано: $${donationsAmount}</div>`;
+        const donationsText = donationsAmount > 0 
+          ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}')">💰 Собрано: $${donationsAmount}</div>`
+          : `<div style="font-size: 12px; opacity: 0.6;">Собрано: $0</div>`;
         
         return `
           <div class="report-card" data-report-id="${report._id}">
@@ -1770,5 +1772,146 @@ async function handleUpdateProfile(e) {
   } catch (error) {
     console.error('Ошибка обновления профиля:', error);
     showToast(error.message || 'Ошибка обновления профиля', 'error');
+  }
+}
+
+
+// Показать донатеров отчёта
+window.showReportDonations = async function(reportId) {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    const donations = await client.query("challenges:getReportDonations", { 
+      progressUpdateId: reportId 
+    });
+    
+    if (donations.length === 0) {
+      showToast('Пока нет донатов', 'info');
+      return;
+    }
+    
+    // Создаем модальное окно для отображения донатеров
+    let modal = document.getElementById('donations-list-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'donations-list-modal';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+    
+    const donationsList = donations.map(donation => {
+      const avatarHtml = donation.donorPhotoUrl 
+        ? `<img src="${donation.donorPhotoUrl}" alt="${donation.donorUsername}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+        : (donation.donorFirstName || donation.donorUsername).charAt(0).toUpperCase();
+      
+      return `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 8px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; overflow: hidden; flex-shrink: 0;">
+            ${avatarHtml}
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">@${donation.donorUsername}</div>
+            ${donation.message ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 2px;">${donation.message}</div>` : ''}
+          </div>
+          <div style="font-size: 16px; font-weight: 700; color: #10b981;">$${donation.amount}</div>
+        </div>
+      `;
+    }).join('');
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Донатеры (${donations.length})</h2>
+          <button class="close" onclick="closeModal('donations-list-modal')">✕</button>
+        </div>
+        <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+          ${donationsList}
+        </div>
+      </div>
+    `;
+    
+    modal.classList.add('active');
+    
+    if (tg) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => closeModal('donations-list-modal'));
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки донатов:', error);
+    showToast('Ошибка загрузки донатов', 'error');
+  }
+}
+
+// Показать донатеров челленджа
+window.showChallengeDonations = async function(challengeId) {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    const donations = await client.query("challenges:getDonations", { 
+      challengeId: challengeId 
+    });
+    
+    if (donations.length === 0) {
+      showToast('Пока нет донатов', 'info');
+      return;
+    }
+    
+    // Создаем модальное окно для отображения донатеров
+    let modal = document.getElementById('donations-list-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'donations-list-modal';
+      modal.className = 'modal';
+      document.body.appendChild(modal);
+    }
+    
+    const donationsList = donations.map(donation => {
+      const avatarHtml = donation.donorPhotoUrl 
+        ? `<img src="${donation.donorPhotoUrl}" alt="${donation.donorUsername}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+        : (donation.donorFirstName || donation.donorUsername).charAt(0).toUpperCase();
+      
+      return `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 8px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; overflow: hidden; flex-shrink: 0;">
+            ${avatarHtml}
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">@${donation.donorUsername}</div>
+            ${donation.message ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 2px;">${donation.message}</div>` : ''}
+          </div>
+          <div style="font-size: 16px; font-weight: 700; color: #10b981;">$${donation.amount}</div>
+        </div>
+      `;
+    }).join('');
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Донатеры (${donations.length})</h2>
+          <button class="close" onclick="closeModal('donations-list-modal')">✕</button>
+        </div>
+        <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+          ${donationsList}
+        </div>
+      </div>
+    `;
+    
+    modal.classList.add('active');
+    
+    if (tg) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => closeModal('donations-list-modal'));
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки донатов:', error);
+    showToast('Ошибка загрузки донатов', 'error');
   }
 }

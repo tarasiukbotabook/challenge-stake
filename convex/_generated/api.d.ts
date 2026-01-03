@@ -9,6 +9,7 @@
  */
 
 import type * as challenges from "../challenges.js";
+import type * as telegram from "../telegram.js";
 import type * as users from "../users.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   challenges: typeof challenges;
+  telegram: typeof telegram;
   users: typeof users;
 }>;
 

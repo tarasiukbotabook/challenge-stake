@@ -215,6 +215,9 @@ export const donate = mutation({
       throw new Error("Недостаточно средств на балансе");
     }
 
+    // Получаем владельца челленджа для уведомления
+    const challengeOwner = await ctx.db.get(challenge.userId);
+
     // Списываем с баланса донора
     await ctx.db.patch(args.donorUserId, {
       balance: donor.balance - args.amount,
@@ -244,6 +247,20 @@ export const donate = mutation({
       description: `Донат на челлендж: ${challenge.title}`,
     });
 
+    // Отправляем уведомление владельцу челленджа
+    if (challengeOwner?.telegramId) {
+      const donorName = donor.firstName || donor.username || "Аноним";
+      const notificationMessage = args.message
+        ? `💰 <b>Новый донат!</b>\n\nОт: @${donorName}\nСумма: $${args.amount}\nСообщение: "${args.message}"\n\nЧеллендж: ${challenge.title}`
+        : `💰 <b>Новый донат!</b>\n\nОт: @${donorName}\nСумма: $${args.amount}\n\nЧеллендж: ${challenge.title}`;
+
+      // Планируем отправку уведомления (используем scheduler)
+      await ctx.scheduler.runAfter(0, "telegram:sendNotification" as any, {
+        telegramId: challengeOwner.telegramId,
+        message: notificationMessage,
+      });
+    }
+
     return { donationId };
   },
 });
@@ -263,6 +280,31 @@ export const getDonations = query({
           ...donation,
           donorUsername: donor?.username || "Anonymous",
           donorFirstName: donor?.firstName || "",
+          donorPhotoUrl: donor?.photoUrl || "",
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+export const getReportDonations = query({
+  args: { progressUpdateId: v.id("progressUpdates") },
+  handler: async (ctx, args) => {
+    const donations = await ctx.db
+      .query("donations")
+      .withIndex("by_progress", (q) => q.eq("progressUpdateId", args.progressUpdateId))
+      .collect();
+
+    const enriched = await Promise.all(
+      donations.map(async (donation) => {
+        const donor = await ctx.db.get(donation.donorUserId);
+        return {
+          ...donation,
+          donorUsername: donor?.username || "Anonymous",
+          donorFirstName: donor?.firstName || "",
+          donorPhotoUrl: donor?.photoUrl || "",
         };
       })
     );
