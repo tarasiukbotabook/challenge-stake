@@ -1111,6 +1111,9 @@ window.showUserProfile = async function(userId) {
     console.log('Loading user stats for:', userId);
     const stats = await client.query("users:getUserStats", { userId });
     console.log('Stats received:', stats);
+    console.log('Stats username:', stats.username);
+    console.log('Stats firstName:', stats.firstName);
+    console.log('Stats photoUrl:', stats.photoUrl);
     
     const challenges = await client.query("challenges:getMy", { userId });
     console.log('Challenges received:', challenges.length);
