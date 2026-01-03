@@ -192,6 +192,7 @@ export const getProgress = query({
 export const donate = mutation({
   args: {
     challengeId: v.id("challenges"),
+    progressUpdateId: v.optional(v.id("progressUpdates")),
     donorUserId: v.id("users"),
     amount: v.number(),
     message: v.optional(v.string()),
@@ -216,6 +217,7 @@ export const donate = mutation({
     // Добавляем донат
     const donationId = await ctx.db.insert("donations", {
       challengeId: args.challengeId,
+      progressUpdateId: args.progressUpdateId,
       donorUserId: args.donorUserId,
       amount: args.amount,
       message: args.message,
@@ -275,10 +277,10 @@ export const getAllReports = query({
         const user = await ctx.db.get(report.userId);
         const challenge = await ctx.db.get(report.challengeId);
         
-        // Получаем донаты для этого челленджа
+        // Получаем донаты для этого конкретного отчёта
         const donations = await ctx.db
           .query("donations")
-          .withIndex("by_challenge", (q) => q.eq("challengeId", report.challengeId))
+          .withIndex("by_progress", (q) => q.eq("progressUpdateId", report._id))
           .collect();
         
         const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);

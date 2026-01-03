@@ -32,11 +32,13 @@ export default defineSchema({
 
   donations: defineTable({
     challengeId: v.id("challenges"),
+    progressUpdateId: v.optional(v.id("progressUpdates")),
     donorUserId: v.id("users"),
     amount: v.number(),
     message: v.optional(v.string()),
   }).index("by_challenge", ["challengeId"])
-    .index("by_donor", ["donorUserId"]),
+    .index("by_donor", ["donorUserId"])
+    .index("by_progress", ["progressUpdateId"]),
 
   progressUpdates: defineTable({
     challengeId: v.id("challenges"),

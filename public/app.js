@@ -653,8 +653,9 @@ window.showDonateModal = function(challengeId) {
 }
 
 // Показать модальное окно доната из отчёта
-window.showDonateModalFromReport = function(challengeId, username) {
+window.showDonateModalFromReport = function(challengeId, reportId, username) {
   currentChallengeId = challengeId;
+  window.currentReportId = reportId; // Сохраняем ID отчёта
   
   // Обновляем заголовок модального окна
   const modalTitle = document.querySelector('#donate-modal .modal-title');
@@ -837,6 +838,11 @@ async function handleDonate(e) {
     amount: parseFloat(document.getElementById('donate-amount').value),
     message: document.getElementById('donate-message').value || undefined
   };
+  
+  // Если донат из отчёта, добавляем progressUpdateId
+  if (window.currentReportId) {
+    donateData.progressUpdateId = window.currentReportId;
+  }
 
   try {
     await client.mutation("challenges:donate", donateData);
@@ -846,11 +852,12 @@ async function handleDonate(e) {
     closeModal('donate-modal');
     e.target.reset();
     
-    // Сбрасываем заголовок модального окна
+    // Сбрасываем заголовок модального окна и reportId
     const modalTitle = document.querySelector('#donate-modal .modal-title');
     if (modalTitle) {
       modalTitle.textContent = 'Поддержать челлендж';
     }
+    window.currentReportId = null;
     
     await loadStats();
     
@@ -1061,9 +1068,9 @@ window.showFeedReports = async function() {
         // Проверяем, это не наш отчёт
         const canDonate = currentUser && report.userId !== currentUser.id;
         
-        // Сумма донатов
+        // Сумма донатов - всегда показываем
         const donationsAmount = report.donationsAmount || 0;
-        const donationsText = donationsAmount > 0 ? `<div style="font-size: 12px; opacity: 0.6;">Собрано: $${donationsAmount}</div>` : '';
+        const donationsText = `<div style="font-size: 12px; opacity: 0.6;">Собрано: $${donationsAmount}</div>`;
         
         return `
           <div class="report-card" data-report-id="${report._id}">
@@ -1091,7 +1098,7 @@ window.showFeedReports = async function() {
                 ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
                 ${donationsText}
               </div>
-              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')">Поддержать</button>` : ''}
+              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
             </div>
           </div>
         `;
