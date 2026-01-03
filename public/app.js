@@ -516,7 +516,7 @@ function displayChallenges(challenges, isMine, container) {
           <div class="challenge-stake-amount">
             <span class="currency">$</span>
             <span class="amount">${totalAmount}</span>
-            ${donationsAmount > 0 ? `<span class="challenge-stake-details" style="cursor: pointer;" onclick="event.stopPropagation(); showChallengeDonations('${challenge._id}')" title="Посмотреть донатеров">(${challenge.stakeAmount} + ${donationsAmount})</span>` : ''}
+            ${donationsAmount > 0 ? `<span class="challenge-stake-details" style="cursor: pointer;" onclick="event.stopPropagation(); showChallengeDonations('${challenge._id}', '${challenge.userId}')" title="Посмотреть донатеров">(${challenge.stakeAmount} + ${donationsAmount})</span>` : ''}
           </div>
           ${donateButton}
         </div>
@@ -1071,7 +1071,7 @@ window.showFeedReports = async function() {
         // Сумма донатов - всегда показываем, делаем кликабельной если есть донаты
         const donationsAmount = report.donationsAmount || 0;
         const donationsText = donationsAmount > 0 
-          ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}')">💰 Собрано: $${donationsAmount}</div>`
+          ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}', '${report.userId}')">💰 Собрано: $${donationsAmount}</div>`
           : `<div style="font-size: 12px; opacity: 0.6;">Собрано: $0</div>`;
         
         return `
