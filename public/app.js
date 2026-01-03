@@ -114,7 +114,7 @@ function hideLoading() {
 // Screen navigation
 function switchScreen(screenName) {
   const screens = document.querySelectorAll('.screen');
-  const navBtns = document.querySelectorAll('.nav-btn:not(.nav-btn-fab)');
+  const navBtns = document.querySelectorAll('.nav-btn');
   
   screens.forEach(screen => screen.classList.remove('active'));
   navBtns.forEach(btn => btn.classList.remove('active'));
@@ -122,9 +122,14 @@ function switchScreen(screenName) {
   document.getElementById(`${screenName}-screen`).classList.add('active');
   
   // Update active nav button
-  const activeIndex = { main: 0, feed: 1, settings: 3 }[screenName];
+  const activeIndex = { main: 0, feed: 1 }[screenName];
   if (activeIndex !== undefined) {
     navBtns[activeIndex].classList.add('active');
+  }
+  
+  // Load data for feed screen
+  if (screenName === 'feed') {
+    showChallenges('all');
   }
   
   if (tg) {
@@ -386,7 +391,11 @@ function animateValue(id, start, end, duration) {
 async function loadChallenges(type) {
   if (!currentUser) return;
   
-  const container = document.getElementById('challenges-list');
+  const container = type === 'my' 
+    ? document.getElementById('challenges-list')
+    : document.getElementById('feed-list');
+  
+  if (!container) return;
   
   // Показываем индикатор загрузки
   container.innerHTML = `
@@ -403,7 +412,7 @@ async function loadChallenges(type) {
     } else {
       challenges = await client.query("challenges:getAll");
     }
-    displayChallenges(challenges, type === 'my');
+    displayChallenges(challenges, type === 'my', container);
   } catch (error) {
     console.error('Ошибка загрузки челленджей:', error);
     container.innerHTML = `
@@ -416,15 +425,17 @@ async function loadChallenges(type) {
 }
 
 // Отображение челленджей
-function displayChallenges(challenges, isMine) {
-  const container = document.getElementById('challenges-list');
+function displayChallenges(challenges, isMine, container) {
+  if (!container) {
+    container = document.getElementById('challenges-list');
+  }
   
   if (challenges.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">🎯</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">🎯</div>
         <div class="empty-text">Пока нет челленджей</div>
-        ${isMine ? '<button class="btn btn-primary" onclick="showCreateChallenge()">Создать первый челлендж</button>' : ''}
+        ${isMine ? '<button class="btn btn-primary" onclick="showCreateChallenge()" style="margin-top: 20px;">Создать первый челлендж</button>' : ''}
       </div>
     `;
     return;
@@ -450,13 +461,13 @@ function displayChallenges(challenges, isMine) {
     const actions = isMine && challenge.status === 'active' ? `
       <div class="challenge-actions">
         <button class="btn btn-sm btn-primary" onclick="window.showProgressModal('${challenge._id}')">
-          📝
+          Прогресс
         </button>
         <button class="btn btn-sm btn-success" onclick="window.completeChallenge('${challenge._id}')">
-          ✅
+          Выполнен
         </button>
         <button class="btn btn-sm btn-danger" onclick="window.failChallenge('${challenge._id}')">
-          ❌
+          Провален
         </button>
       </div>
     ` : '';
@@ -464,13 +475,13 @@ function displayChallenges(challenges, isMine) {
     return `
       <div class="challenge-card ${challenge.status} animate-in" style="animation-delay: ${index * 0.1}s">
         <div class="challenge-header">
-          <div class="challenge-title">${categoryEmoji[challenge.category] || '📌'} ${challenge.title}</div>
+          <div class="challenge-title">${challenge.title}</div>
           ${statusBadge[challenge.status]}
         </div>
         <div class="challenge-description">${challenge.description || 'Без описания'}</div>
         <div class="challenge-meta">
-          <span>👤 ${challenge.username || 'Вы'}</span>
-          <span>📅 ${deadline.toLocaleDateString('ru-RU')}</span>
+          <span>${challenge.username || 'Вы'}</span>
+          <span>${deadline.toLocaleDateString('ru-RU')}</span>
         </div>
         <div class="challenge-stake">${challenge.stakeAmount}₽</div>
         ${actions}
@@ -628,17 +639,33 @@ async function handleAddBalance(e) {
 
 // UI функции
 window.showChallenges = function(type) {
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(tab => tab.classList.remove('active'));
-  
-  if (type === 'my') {
+  if (type === 'all') {
+    // В ленте
+    const tabs = document.querySelectorAll('#feed-screen .tab-btn');
+    tabs.forEach(tab => tab.classList.remove('active'));
     tabs[0].classList.add('active');
-  } else {
-    tabs[1].classList.add('active');
   }
   
   if (tg) tg.HapticFeedback.impactOccurred('light');
   loadChallenges(type);
+}
+
+// Показать отчёты в ленте
+window.showFeedReports = function() {
+  const tabs = document.querySelectorAll('#feed-screen .tab-btn');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  tabs[1].classList.add('active');
+  
+  const feedList = document.getElementById('feed-list');
+  feedList.innerHTML = `
+    <div class="empty-state">
+      <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📊</div>
+      <div class="empty-text">Отчёты о прогрессе</div>
+      <p style="opacity: 0.6; margin-top: 8px;">Здесь будут появляться отчёты пользователей о выполнении челленджей</p>
+    </div>
+  `;
+  
+  if (tg) tg.HapticFeedback.impactOccurred('light');
 }
 
 window.switchScreen = switchScreen;

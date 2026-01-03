@@ -184,10 +184,18 @@ body {
   opacity: 0.6;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .header-balance {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-balance .balance-amount {
@@ -203,7 +211,9 @@ body {
   background: rgba(139, 92, 246, 0.1);
   border: 1px solid rgba(139, 92, 246, 0.3);
   color: #8b5cf6;
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -211,6 +221,10 @@ body {
 .btn-icon:hover {
   background: rgba(139, 92, 246, 0.2);
   transform: scale(1.05);
+}
+
+.btn-icon svg {
+  display: block;
 }
 
 /* Compact Stats (Instagram style) */
@@ -389,7 +403,7 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   z-index: 100;
 }
 
@@ -411,25 +425,13 @@ body {
   color: #8b5cf6;
 }
 
-.nav-btn-fab {
-  position: relative;
-  margin-top: -20px;
+.nav-btn.active .nav-icon {
+  stroke: #8b5cf6;
 }
 
 .nav-icon {
-  font-size: 24px;
-}
-
-.nav-icon-fab {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  stroke: rgba(255, 255, 255, 0.5);
+  transition: stroke 0.2s;
 }
 
 .nav-label {
