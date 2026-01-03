@@ -1,4 +1,4 @@
-const CONVEX_URL = "https://greedy-badger-196.convex.cloud";
+const CONVEX_URL = "https://lovable-mongoose-763.convex.cloud";
 
 // Simple Convex client using fetch
 const client = {
