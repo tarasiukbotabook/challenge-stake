@@ -1299,6 +1299,15 @@ window.closeUserProfile = function() {
   }
 }
 
+// Показать свой профиль
+window.showMyProfile = function() {
+  if (currentUser) {
+    showUserProfile(currentUser.id);
+  } else {
+    showToast('Необходима авторизация', 'error');
+  }
+}
+
 
 // Функции для шаринга
 const APP_URL = window.location.origin;
