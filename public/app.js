@@ -64,8 +64,8 @@ function showToast(message, type = 'info', title = '') {
   toast.className = `toast ${type}`;
   
   const icons = {
-    success: '✅',
-    error: '❌',
+    success: '',
+    error: '',
     info: 'ℹ️'
   };
   
@@ -433,7 +433,7 @@ async function loadChallenges(type) {
   // Показываем индикатор загрузки
   container.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
-      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div style="font-size: 32px; margin-bottom: 12px;"></div>
       <div>Загрузка...</div>
     </div>
   `;
@@ -450,7 +450,7 @@ async function loadChallenges(type) {
     console.error('Ошибка загрузки челленджей:', error);
     container.innerHTML = `
       <div class="empty-state">
-        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
         <div class="empty-text">Ошибка загрузки</div>
       </div>
     `;
@@ -466,7 +466,7 @@ function displayChallenges(challenges, isMine, container) {
   if (challenges.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">🎯</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
         <div class="empty-text">Пока нет челленджей</div>
         ${isMine ? '<button class="btn btn-primary" onclick="showCreateChallenge()" style="margin-top: 20px;">Создать первый челлендж</button>' : ''}
       </div>
@@ -487,7 +487,7 @@ function displayChallenges(challenges, isMine, container) {
 
     const donateButton = !isMine && challenge.status === 'active' ? `
       <button class="btn-donate" onclick="window.showDonateModal('${challenge._id}')">
-        💰 Поддержать
+        Поддержать
       </button>
     ` : '';
 
@@ -814,7 +814,7 @@ async function handleAddBalance(e) {
       amount
     });
     
-    showToast(`Баланс пополнен на $${amount}`, 'success', 'Баланс пополнен! 💰');
+    showToast(`Баланс пополнен на $${amount}`, 'success', 'Баланс пополнен!');
     
     closeModal('balance-modal');
     e.target.reset();
@@ -841,7 +841,7 @@ async function handleDonate(e) {
   try {
     await client.mutation("challenges:donate", donateData);
     
-    showToast('Спасибо за поддержку!', 'success', 'Донат отправлен! 💰');
+    showToast('Спасибо за поддержку!', 'success', 'Донат отправлен!');
     
     closeModal('donate-modal');
     e.target.reset();
@@ -1029,7 +1029,7 @@ window.showFeedReports = async function() {
   // Показываем индикатор загрузки
   feedList.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
-      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div style="font-size: 32px; margin-bottom: 12px;"></div>
       <div>Загрузка отчётов...</div>
     </div>
   `;
@@ -1042,7 +1042,7 @@ window.showFeedReports = async function() {
     if (reports.length === 0) {
       feedList.innerHTML = `
         <div class="empty-state">
-          <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📊</div>
+          <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
           <div class="empty-text">Пока нет отчётов</div>
           <p style="opacity: 0.6; margin-top: 8px;">Будьте первым, кто опубликует отчёт о прогрессе!</p>
         </div>
@@ -1063,7 +1063,7 @@ window.showFeedReports = async function() {
         
         // Сумма донатов
         const donationsAmount = report.donationsAmount || 0;
-        const donationsText = donationsAmount > 0 ? `<div style="font-size: 12px; opacity: 0.6;">💰 $${donationsAmount}</div>` : '';
+        const donationsText = donationsAmount > 0 ? `<div style="font-size: 12px; opacity: 0.6;">Собрано: $${donationsAmount}</div>` : '';
         
         return `
           <div class="report-card" data-report-id="${report._id}">
@@ -1091,7 +1091,7 @@ window.showFeedReports = async function() {
                 ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
                 ${donationsText}
               </div>
-              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')">💰 Поддержать</button>` : ''}
+              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')">Поддержать</button>` : ''}
             </div>
           </div>
         `;
@@ -1104,7 +1104,7 @@ window.showFeedReports = async function() {
     console.error('Message:', error.message);
     feedList.innerHTML = `
       <div class="empty-state">
-        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
         <div class="empty-text">Ошибка загрузки отчётов</div>
         <p style="opacity: 0.6; margin-top: 8px;">${error.message}</p>
       </div>
@@ -1162,7 +1162,7 @@ window.showUserProfile = async function(userId) {
   const profileContent = document.getElementById('profile-content');
   profileContent.innerHTML = `
     <div style="text-align: center; padding: 40px;">
-      <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div style="font-size: 32px; margin-bottom: 12px;"></div>
       <div>Загрузка профиля...</div>
     </div>
   `;
@@ -1265,7 +1265,7 @@ window.showUserProfile = async function(userId) {
     if (challenges.length === 0) {
       challengesList.innerHTML = `
         <div class="empty-state">
-          <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;">🎯</div>
+          <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;"></div>
           <div class="empty-text">Пока нет челленджей</div>
         </div>
       `;
@@ -1277,7 +1277,7 @@ window.showUserProfile = async function(userId) {
     console.error('Ошибка загрузки профиля:', error);
     profileContent.innerHTML = `
       <div class="empty-state">
-        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
         <div class="empty-text">Ошибка загрузки профиля</div>
         <p style="opacity: 0.6; margin-top: 8px;">${error.message}</p>
       </div>
@@ -1511,10 +1511,10 @@ async function showChallengeDetailModal(challenge, isMine) {
   const actionButtons = isMine && challenge.status === 'active' ? `
     <div style="display: flex; gap: 12px; margin-top: 20px;">
       <button class="btn btn-success" onclick="completeChallenge('${challenge._id}'); closeModal('challenge-detail-modal');" style="flex: 1;">
-        ✅ Выполнен
+         Выполнен
       </button>
       <button class="btn btn-danger" onclick="failChallenge('${challenge._id}'); closeModal('challenge-detail-modal');" style="flex: 1;">
-        ❌ Провален
+         Провален
       </button>
     </div>
   ` : '';
@@ -1568,7 +1568,7 @@ async function showChallengeDetailModal(challenge, isMine) {
         <div id="challenge-reports-section" style="margin-top: 24px;">
           <h4 style="font-size: 16px; margin-bottom: 12px; opacity: 0.8;">История отчётов</h4>
           <div id="challenge-reports-list" style="text-align: center; padding: 20px; opacity: 0.5;">
-            <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+            <div style="font-size: 24px; margin-bottom: 8px;"></div>
             <div style="font-size: 14px;">Загрузка...</div>
           </div>
         </div>
@@ -1602,7 +1602,7 @@ async function loadChallengeReports(challengeId) {
     if (reports.length === 0) {
       reportsList.innerHTML = `
         <div style="text-align: center; padding: 20px; opacity: 0.5;">
-          <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+          <div style="font-size: 32px; margin-bottom: 8px;"></div>
           <div style="font-size: 14px;">Пока нет отчётов</div>
         </div>
       `;
@@ -1627,7 +1627,7 @@ async function loadChallengeReports(challengeId) {
     console.error('Ошибка загрузки отчётов:', error);
     reportsList.innerHTML = `
       <div style="text-align: center; padding: 20px; opacity: 0.5;">
-        <div style="font-size: 32px; margin-bottom: 8px;">❌</div>
+        <div style="font-size: 32px; margin-bottom: 8px;"></div>
         <div style="font-size: 14px;">Ошибка загрузки</div>
       </div>
     `;
@@ -1637,12 +1637,12 @@ async function loadChallengeReports(challengeId) {
 // Получить название категории
 function getCategoryName(category) {
   const categories = {
-    health: '🏃 Здоровье и спорт',
-    learning: '📚 Обучение',
-    business: '💼 Бизнес',
-    habits: '🎯 Привычки',
-    creative: '🎨 Творчество',
-    other: '📌 Другое'
+    health: ' Здоровье и спорт',
+    learning: ' Обучение',
+    business: ' Бизнес',
+    habits: ' Привычки',
+    creative: ' Творчество',
+    other: ' Другое'
   };
   return categories[category] || category;
 }

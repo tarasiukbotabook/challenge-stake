@@ -385,11 +385,18 @@ body {
 
 .challenge-meta {
   display: flex;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 12px;
   opacity: 0.5;
-  margin-bottom: 12px;
+  margin-top: 2px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.challenge-meta .challenge-badge {
+  opacity: 1;
+  padding: 2px 8px;
+  font-size: 11px;
 }
 
 .challenge-stake {
