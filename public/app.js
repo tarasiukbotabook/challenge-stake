@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
-const CONVEX_URL = "https://charming-toad-571.convex.cloud";
+const CONVEX_URL = "https://greedy-badger-196.convex.cloud";
 const client = new ConvexHttpClient(CONVEX_URL);
 
 let currentUser = null;
