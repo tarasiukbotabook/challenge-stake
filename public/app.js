@@ -1063,10 +1063,10 @@ window.showFeedReports = async function() {
         
         // Сумма донатов
         const donationsAmount = report.donationsAmount || 0;
-        const donationsText = donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">💰 Собрано донатов: $${donationsAmount}</div>` : '';
+        const donationsText = donationsAmount > 0 ? `<div style="font-size: 12px; opacity: 0.6;">💰 $${donationsAmount}</div>` : '';
         
         return `
-          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s" data-report-id="${report._id}">
+          <div class="report-card" data-report-id="${report._id}">
             <div class="report-header">
               <div class="report-user">
                 <div class="report-avatar">${avatarHtml}</div>
@@ -1074,11 +1074,10 @@ window.showFeedReports = async function() {
                   <div class="report-username" onclick="showUserProfile('${report.userId}')">@${report.username}</div>
                   <div class="report-challenge">${report.challengeTitle}</div>
                   <div class="report-date">${dateStr}</div>
-                  ${donationsText}
                 </div>
               </div>
               <button class="btn-menu" onclick="showReportMenu('${report._id}', '${report.username}')" title="Поделиться">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1"></circle>
                   <circle cx="12" cy="5" r="1"></circle>
                   <circle cx="12" cy="19" r="1"></circle>
@@ -1087,9 +1086,12 @@ window.showFeedReports = async function() {
             </div>
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
-            <div style="display: flex; gap: 12px; margin-top: 12px; align-items: center;">
-              ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
-              ${canDonate ? `<button class="btn btn-sm btn-primary" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')" style="margin-left: auto;">💰 Поддержать</button>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
+                ${donationsText}
+              </div>
+              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report.username}')">💰 Поддержать</button>` : ''}
             </div>
           </div>
         `;
