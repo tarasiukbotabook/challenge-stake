@@ -8,11 +8,18 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="animated-bg"></div>
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Загрузка...</div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
   
-  <div id="app">
+  <div id="app" style="display: none;">
     <!-- Main Screen -->
-    <div id="main-screen">
+    <div id="main-screen" class="screen active">
       <div class="header">
         <div class="user-avatar" id="user-avatar">
           🎯
@@ -21,37 +28,28 @@
           <h1 id="user-name">Challenge Stake</h1>
           <p id="user-greeting">Достигай целей публично</p>
         </div>
+        <div class="header-balance">
+          <div class="balance-amount" id="user-balance">0₽</div>
+          <button class="btn-icon" onclick="showAddBalance()">💳</button>
+        </div>
       </div>
 
       <div class="container">
-        <!-- Balance Card -->
-        <div class="balance-card">
-          <div class="balance-label">Ваш баланс</div>
-          <div class="balance-amount" id="user-balance">0₽</div>
-          <div class="balance-actions">
-            <button class="btn btn-secondary btn-sm" onclick="showAddBalance()">
-              💳 Пополнить
-            </button>
+        <!-- Compact Stats (Instagram style) -->
+        <div class="stats-compact">
+          <div class="stat-item">
+            <div class="stat-number" id="stat-total">0</div>
+            <div class="stat-text">Всего</div>
           </div>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-total">0</div>
-            <div class="stat-label">Всего</div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-completed">0</div>
+            <div class="stat-text">Выполнено</div>
           </div>
-          <div class="stat-card success">
-            <div class="stat-value" id="stat-completed">0</div>
-            <div class="stat-label">Выполнено</div>
-          </div>
-          <div class="stat-card danger">
-            <div class="stat-value" id="stat-failed">0</div>
-            <div class="stat-label">Провалено</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-active">0</div>
-            <div class="stat-label">Активных</div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-active">0</div>
+            <div class="stat-text">Активных</div>
           </div>
         </div>
 
@@ -68,14 +66,68 @@
         <!-- Challenges List -->
         <div id="challenges-list"></div>
       </div>
+    </div>
 
-      <!-- FAB Button -->
-      <div class="bottom-nav">
-        <button class="fab" onclick="showCreateChallenge()">
-          ➕
-        </button>
+    <!-- Feed Screen -->
+    <div id="feed-screen" class="screen">
+      <div class="header">
+        <h1>Лента</h1>
+      </div>
+      <div class="container">
+        <div class="empty-state">
+          <div class="empty-icon">📱</div>
+          <div class="empty-text">Лента обновлений</div>
+          <p style="opacity: 0.6; margin-top: 8px;">Здесь будут появляться обновления от других пользователей</p>
+        </div>
       </div>
     </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+      <div class="header">
+        <h1>Настройки</h1>
+      </div>
+      <div class="container">
+        <div class="settings-list">
+          <div class="settings-item">
+            <span>🔔 Уведомления</span>
+            <span>Вкл</span>
+          </div>
+          <div class="settings-item">
+            <span>🌙 Темная тема</span>
+            <span>Вкл</span>
+          </div>
+          <div class="settings-item">
+            <span>🌐 Язык</span>
+            <span>Русский</span>
+          </div>
+          <div class="settings-item">
+            <span>ℹ️ О приложении</span>
+            <span>v1.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <button class="nav-btn active" onclick="switchScreen('main')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Главная</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('feed')">
+        <span class="nav-icon">📱</span>
+        <span class="nav-label">Лента</span>
+      </button>
+      <button class="nav-btn nav-btn-fab" onclick="showCreateChallenge()">
+        <span class="nav-icon-fab">➕</span>
+      </button>
+      <button class="nav-btn" onclick="switchScreen('settings')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Настройки</span>
+      </button>
+    </div>
+  </div>
 
     <!-- Create Challenge Modal -->
     <div id="create-modal" class="modal">

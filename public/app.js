@@ -7,6 +7,74 @@ let currentUser = null;
 let currentChallengeId = null;
 let tg = null;
 
+// Toast notifications
+function showToast(message, type = 'info', title = '') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icons = {
+    success: '✅',
+    error: '❌',
+    info: 'ℹ️'
+  };
+  
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.info}</div>
+    <div class="toast-content">
+      ${title ? `<div class="toast-title">${title}</div>` : ''}
+      <div class="toast-message">${message}</div>
+    </div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Haptic feedback
+  if (tg) {
+    tg.HapticFeedback.notificationOccurred(type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning');
+  }
+  
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    toast.style.animation = 'slideIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Hide loading screen
+function hideLoading() {
+  const loadingScreen = document.getElementById('loading-screen');
+  const app = document.getElementById('app');
+  
+  loadingScreen.classList.add('fade-out');
+  app.style.display = 'block';
+  
+  setTimeout(() => {
+    loadingScreen.remove();
+  }, 300);
+}
+
+// Screen navigation
+function switchScreen(screenName) {
+  const screens = document.querySelectorAll('.screen');
+  const navBtns = document.querySelectorAll('.nav-btn:not(.nav-btn-fab)');
+  
+  screens.forEach(screen => screen.classList.remove('active'));
+  navBtns.forEach(btn => btn.classList.remove('active'));
+  
+  document.getElementById(`${screenName}-screen`).classList.add('active');
+  
+  // Update active nav button
+  const activeIndex = { main: 0, feed: 1, settings: 3 }[screenName];
+  if (activeIndex !== undefined) {
+    navBtns[activeIndex].classList.add('active');
+  }
+  
+  if (tg) {
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
 // Инициализация Telegram Mini App
 function initTelegram() {
   if (window.Telegram?.WebApp) {
@@ -98,9 +166,7 @@ async function autoLogin() {
       console.log('Registration successful:', result);
       
       // Показываем приветствие
-      if (tg) {
-        tg.showAlert(`Добро пожаловать, ${telegramUser.first_name}! 🎉\n\nВы получили стартовый бонус 1000₽!`);
-      }
+      showToast(`Вы получили стартовый бонус 1000₽!`, 'success', `Добро пожаловать, ${telegramUser.first_name}! 🎉`);
       
       return true;
     } catch (regError) {
@@ -109,9 +175,7 @@ async function autoLogin() {
       console.error('Error message:', regError.message);
       console.error('Error stack:', regError.stack);
       
-      if (tg) {
-        tg.showAlert('Ошибка регистрации: ' + (regError.message || 'Неизвестная ошибка') + '\n\nПроверьте консоль браузера для деталей.');
-      }
+      showToast(regError.message || 'Неизвестная ошибка', 'error', 'Ошибка регистрации');
       return false;
     }
   }
@@ -137,6 +201,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   setupEventListeners();
+  
+  // Hide loading screen
+  hideLoading();
 });
 
 // Обновление приветствия и аватарки
@@ -193,15 +260,13 @@ async function loadStats() {
     
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
-    document.getElementById('stat-failed').textContent = stats.failed;
     document.getElementById('stat-active').textContent = stats.active;
     document.getElementById('user-balance').textContent = `${stats.balance}₽`;
     
     // Анимация чисел
-    animateValue('stat-total', 0, stats.total, 1000);
-    animateValue('stat-completed', 0, stats.completed, 1000);
-    animateValue('stat-failed', 0, stats.failed, 1000);
-    animateValue('stat-active', 0, stats.active, 1000);
+    animateValue('stat-total', 0, stats.total, 800);
+    animateValue('stat-completed', 0, stats.completed, 800);
+    animateValue('stat-active', 0, stats.active, 800);
   } catch (error) {
     console.error('Ошибка загрузки статистики:', error);
   }
@@ -326,20 +391,14 @@ async function handleCreateChallenge(e) {
   try {
     await client.mutation("challenges:create", challengeData);
     
-    if (tg) {
-      tg.showAlert('Челлендж создан! Ставка заморожена. 🎉');
-      tg.HapticFeedback.notificationOccurred('success');
-    }
+    showToast('Ставка заморожена', 'success', 'Челлендж создан! 🎉');
     
     closeModal('create-modal');
     e.target.reset();
     await loadUserData();
   } catch (error) {
     console.error('Ошибка создания челленджа:', error);
-    if (tg) {
-      tg.showAlert(error.message || 'Ошибка создания челленджа');
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showToast(error.message || 'Ошибка создания челленджа', 'error');
   }
 }
 
@@ -361,18 +420,12 @@ window.completeChallenge = async function(id) {
       userId: currentUser.id
     });
     
-    if (tg) {
-      tg.showAlert('Поздравляем! Ставка возвращена на ваш счет. 🎉');
-      tg.HapticFeedback.notificationOccurred('success');
-    }
+    showToast('Ставка возвращена на ваш счет', 'success', 'Поздравляем! 🎉');
     
     await loadUserData();
   } catch (error) {
     console.error('Ошибка завершения челленджа:', error);
-    if (tg) {
-      tg.showAlert(error.message || 'Ошибка завершения челленджа');
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showToast(error.message || 'Ошибка завершения челленджа', 'error');
   }
 }
 
@@ -394,18 +447,12 @@ window.failChallenge = async function(id) {
       userId: currentUser.id
     });
     
-    if (tg) {
-      tg.showAlert('Челлендж провален. Средства переведены на благотворительность.');
-      tg.HapticFeedback.notificationOccurred('warning');
-    }
+    showToast('Средства переведены на благотворительность', 'info', 'Челлендж провален');
     
     await loadUserData();
   } catch (error) {
     console.error('Ошибка обработки провала:', error);
-    if (tg) {
-      tg.showAlert(error.message || 'Ошибка обработки провала');
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showToast(error.message || 'Ошибка обработки провала', 'error');
   }
 }
 
@@ -435,19 +482,13 @@ async function handleAddProgress(e) {
   try {
     await client.mutation("challenges:addProgress", progressData);
     
-    if (tg) {
-      tg.showAlert('Прогресс добавлен! 🎉');
-      tg.HapticFeedback.notificationOccurred('success');
-    }
+    showToast('Продолжайте в том же духе!', 'success', 'Прогресс добавлен! 🎉');
     
     closeModal('progress-modal');
     e.target.reset();
   } catch (error) {
     console.error('Ошибка добавления прогресса:', error);
-    if (tg) {
-      tg.showAlert(error.message || 'Ошибка добавления прогресса');
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showToast(error.message || 'Ошибка добавления прогресса', 'error');
   }
 }
 
@@ -465,20 +506,14 @@ async function handleAddBalance(e) {
       amount
     });
     
-    if (tg) {
-      tg.showAlert('Баланс пополнен! 💰');
-      tg.HapticFeedback.notificationOccurred('success');
-    }
+    showToast(`Баланс пополнен на ${amount}₽`, 'success', 'Баланс пополнен! 💰');
     
     closeModal('balance-modal');
     e.target.reset();
     await loadStats();
   } catch (error) {
     console.error('Ошибка пополнения баланса:', error);
-    if (tg) {
-      tg.showAlert(error.message || 'Ошибка пополнения баланса');
-      tg.HapticFeedback.notificationOccurred('error');
-    }
+    showToast(error.message || 'Ошибка пополнения баланса', 'error');
   }
 }
 
@@ -496,6 +531,8 @@ window.showChallenges = function(type) {
   if (tg) tg.HapticFeedback.impactOccurred('light');
   loadChallenges(type);
 }
+
+window.switchScreen = switchScreen;
 
 window.showCreateChallenge = function() {
   document.getElementById('create-modal').classList.add('active');
