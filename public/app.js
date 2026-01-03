@@ -469,7 +469,6 @@ async function loadChallenges(type) {
   container.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
-      <div>Загрузка...</div>
     </div>
   `;
   
@@ -1066,7 +1065,6 @@ window.showFeedReports = async function() {
   feedList.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
-      <div>Загрузка отчётов...</div>
     </div>
   `;
   
@@ -1191,7 +1189,6 @@ window.showUserProfile = async function(userId) {
   challengesList.innerHTML = `
     <div style="text-align: center; padding: 40px;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
-      <div>Загрузка профиля...</div>
     </div>
   `;
   
