@@ -135,6 +135,53 @@
       </div>
     </div>
 
+    <!-- Add Report Screen -->
+    <div id="add-report-screen" class="screen">
+      <div class="header">
+        <button class="btn-back" onclick="closeAddReportScreen()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <h1>Добавить отчёт</h1>
+      </div>
+      <div class="container">
+        <form id="add-report-form-page" style="padding: 20px;">
+          <div class="form-group">
+            <label class="form-label">Выберите челлендж</label>
+            <select class="form-select" id="report-challenge-page" required>
+              <option value="">Загрузка...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Текст отчёта</label>
+            <textarea class="form-textarea" id="report-content-page" placeholder="Сегодня пробежал 5км! Чувствую себя отлично 💪" rows="5" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ссылка (опционально)</label>
+            <input type="url" class="form-input" id="report-link-page" placeholder="https://t.me/...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Фото (опционально)</label>
+            <input type="file" class="form-input" id="report-photo-page" accept="image/*">
+            <div id="photo-preview-page" style="margin-top: 10px;"></div>
+          </div>
+
+          <div class="info-box">
+            Отчёт будет виден всем пользователям в ленте
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Опубликовать отчёт
+          </button>
+        </form>
+      </div>
+    </div>
+
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
       <button class="nav-btn active" onclick="switchScreen('main')">
@@ -151,7 +198,6 @@
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
         </div>
-        <span class="nav-label">Отчёт</span>
       </button>
       <button class="nav-btn" onclick="switchScreen('feed')">
         <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

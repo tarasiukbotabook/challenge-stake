@@ -340,9 +340,11 @@ function setupEventListeners() {
   document.getElementById('add-progress-form').addEventListener('submit', handleAddProgress);
   document.getElementById('donate-form').addEventListener('submit', handleDonate);
   document.getElementById('add-report-form').addEventListener('submit', handleAddReport);
+  document.getElementById('add-report-form-page').addEventListener('submit', handleAddReportPage);
   
   // Превью фото
   document.getElementById('report-photo').addEventListener('change', handlePhotoPreview);
+  document.getElementById('report-photo-page').addEventListener('change', handlePhotoPreviewPage);
 }
 
 // Загрузка данных пользователя
@@ -618,12 +620,15 @@ window.showDonateModal = function(challengeId) {
   }
 }
 
-// Показать модальное окно добавления отчёта напрямую (без модалки)
+// Показать экран добавления отчёта
 window.showAddReportDirect = async function() {
   if (!currentUser) {
     showToast('Необходима авторизация', 'error');
     return;
   }
+  
+  // Скрываем нижнее меню
+  document.querySelector('.bottom-nav').style.display = 'none';
   
   // Загружаем активные челленджи пользователя
   try {
@@ -632,21 +637,55 @@ window.showAddReportDirect = async function() {
     
     if (activeChallenges.length === 0) {
       showToast('Сначала создайте челлендж', 'info');
+      document.querySelector('.bottom-nav').style.display = 'flex';
       return;
     }
     
-    const select = document.getElementById('report-challenge');
+    const select = document.getElementById('report-challenge-page');
     select.innerHTML = '<option value="">Выберите челлендж</option>' + 
       activeChallenges.map(c => `<option value="${c._id}">${c.title}</option>`).join('');
     
-    document.getElementById('add-report-modal').classList.add('active');
+    // Показываем экран
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('add-report-screen').classList.add('active');
+    
     if (tg) {
       tg.BackButton.show();
+      tg.BackButton.onClick(closeAddReportScreen);
       tg.HapticFeedback.impactOccurred('light');
     }
   } catch (error) {
     console.error('Ошибка загрузки челленджей:', error);
     showToast('Ошибка загрузки челленджей', 'error');
+    document.querySelector('.bottom-nav').style.display = 'flex';
+  }
+}
+
+// Закрыть экран добавления отчёта
+window.closeAddReportScreen = function() {
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  switchScreen('feed');
+  
+  if (tg) {
+    tg.BackButton.hide();
+  }
+}
+
+// Превью фото для страницы
+function handlePhotoPreviewPage(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('photo-preview-page');
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = `
+        <img src="${e.target.result}" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">
+      `;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = '';
   }
 }
 
@@ -749,6 +788,64 @@ async function handleDonate(e) {
   } catch (error) {
     console.error('Ошибка доната:', error);
     showToast(error.message || 'Ошибка доната', 'error');
+  }
+}
+
+// Добавление отчёта со страницы
+async function handleAddReportPage(e) {
+  e.preventDefault();
+  
+  if (!currentUser) return;
+
+  const challengeId = document.getElementById('report-challenge-page').value;
+  if (!challengeId) {
+    showToast('Выберите челлендж', 'error');
+    return;
+  }
+
+  const content = document.getElementById('report-content-page').value;
+  const socialLink = document.getElementById('report-link-page').value || undefined;
+  const photoFile = document.getElementById('report-photo-page').files[0];
+  
+  let imageUrl = undefined;
+  
+  // Если есть фото, конвертируем в base64
+  if (photoFile) {
+    try {
+      imageUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(photoFile);
+      });
+    } catch (error) {
+      console.error('Ошибка загрузки фото:', error);
+      showToast('Ошибка загрузки фото', 'error');
+      return;
+    }
+  }
+
+  try {
+    await client.mutation("challenges:addProgress", {
+      challengeId,
+      userId: currentUser.id,
+      content,
+      socialLink,
+      imageUrl
+    });
+    
+    showToast('Отчёт опубликован!', 'success', 'Отлично! 🎉');
+    
+    // Очищаем форму
+    e.target.reset();
+    document.getElementById('photo-preview-page').innerHTML = '';
+    
+    // Закрываем экран и переходим в ленту
+    closeAddReportScreen();
+    showFeedReports();
+  } catch (error) {
+    console.error('Ошибка добавления отчёта:', error);
+    showToast(error.message || 'Ошибка добавления отчёта', 'error');
   }
 }
 

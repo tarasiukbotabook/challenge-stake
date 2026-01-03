@@ -150,6 +150,30 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.btn-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #8b5cf6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-back:active {
+  background: rgba(139, 92, 246, 0.2);
+  transform: scale(0.95);
+}
+
+.btn-back svg {
+  display: block;
+}
+
 .user-avatar {
   width: 50px;
   height: 50px;
