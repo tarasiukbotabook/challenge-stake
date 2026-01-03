@@ -19,6 +19,7 @@ export default defineSchema({
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
     stakeAmount: v.number(),
     donationsAmount: v.optional(v.number()), // Сумма донатов
     deadline: v.string(),

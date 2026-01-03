@@ -356,6 +356,7 @@ function setupEventListeners() {
   // Превью фото
   document.getElementById('report-photo').addEventListener('change', handlePhotoPreview);
   document.getElementById('report-photo-page').addEventListener('change', handlePhotoPreviewPage);
+  document.getElementById('challenge-image').addEventListener('change', handleChallengeImagePreview);
 }
 
 // Загрузка данных пользователя
@@ -484,13 +485,7 @@ function displayChallenges(challenges, isMine, container) {
       failed: '<span class="challenge-badge badge-failed">Провален</span>'
     };
 
-    const actions = isMine && challenge.status === 'active' ? `
-      <div class="challenge-actions">
-        <button class="btn btn-sm btn-primary" onclick="window.showChallengeDetail('${challenge._id}')">
-          Открыть
-        </button>
-      </div>
-    ` : !isMine && challenge.status === 'active' ? `
+    const actions = isMine && challenge.status === 'active' ? '' : !isMine && challenge.status === 'active' ? `
       <div class="challenge-actions">
         <button class="btn btn-sm btn-primary" onclick="window.showDonateModal('${challenge._id}')">
           💰 Поддержать
@@ -500,8 +495,12 @@ function displayChallenges(challenges, isMine, container) {
 
     return `
       <div class="challenge-card ${challenge.status} animate-in" style="animation-delay: ${index * 0.1}s" data-challenge-id="${challenge._id}">
+        <div class="challenge-owner">
+          <div class="challenge-owner-avatar">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
+          <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}')">@${challenge.username || 'Unknown'}</div>
+        </div>
         <div class="challenge-header">
-          <div class="challenge-title">${challenge.title}</div>
+          <div class="challenge-title" onclick="window.showChallengeDetail('${challenge._id}')" style="cursor: pointer;">${challenge.title}</div>
           <div style="display: flex; align-items: center; gap: 8px;">
             ${statusBadge[challenge.status]}
             <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
@@ -515,11 +514,10 @@ function displayChallenges(challenges, isMine, container) {
         </div>
         <div class="challenge-description">${challenge.description || 'Без описания'}</div>
         <div class="challenge-meta">
-          <span>${challenge.username || 'Вы'}</span>
           <span>${deadline.toLocaleDateString('ru-RU')}</span>
         </div>
         <div class="challenge-stake">
-          <div style="font-size: 20px; font-weight: 700; color: #10b981;">$$${totalAmount}</div>
+          <div style="font-size: 20px; font-weight: 700; color: #10b981;">$${totalAmount}</div>
           ${donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Ставка: $${challenge.stakeAmount} + Донаты: $${donationsAmount}</div>` : ''}
         </div>
         ${actions}
@@ -537,13 +535,33 @@ async function handleCreateChallenge(e) {
     return;
   }
 
+  const imageFile = document.getElementById('challenge-image').files[0];
+  let imageUrl = undefined;
+  
+  // Если есть картинка, конвертируем в base64
+  if (imageFile) {
+    try {
+      imageUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+    } catch (error) {
+      console.error('Ошибка загрузки картинки:', error);
+      showToast('Ошибка загрузки картинки', 'error');
+      return;
+    }
+  }
+
   const challengeData = {
     userId: currentUser.id,
     title: document.getElementById('challenge-title').value,
     description: document.getElementById('challenge-description').value,
     category: document.getElementById('challenge-category').value,
     stakeAmount: parseFloat(document.getElementById('challenge-stake').value),
-    deadline: document.getElementById('challenge-deadline').value
+    deadline: document.getElementById('challenge-deadline').value,
+    imageUrl
   };
 
   try {
@@ -553,6 +571,7 @@ async function handleCreateChallenge(e) {
     
     closeModal('create-modal');
     e.target.reset();
+    document.getElementById('challenge-image-preview').innerHTML = '';
     await loadUserData();
   } catch (error) {
     console.error('Ошибка создания челленджа:', error);
@@ -706,6 +725,24 @@ window.closeAddReportScreen = function() {
 function handlePhotoPreviewPage(e) {
   const file = e.target.files[0];
   const preview = document.getElementById('photo-preview-page');
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = `
+        <img src="${e.target.result}" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">
+      `;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML = '';
+  }
+}
+
+// Превью картинки челленджа
+function handleChallengeImagePreview(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('challenge-image-preview');
   
   if (file) {
     const reader = new FileReader();
@@ -1380,3 +1417,138 @@ async function handleRouting() {
 
 // Добавляем data-атрибуты для идентификации карточек
 // Это нужно добавить в функции отображения
+
+// Показать детали челленджа
+window.showChallengeDetail = async function(challengeId) {
+  console.log('=== showChallengeDetail called:', challengeId);
+  
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    // Загружаем данные челленджа
+    const challenges = await client.query("challenges:getMy", { userId: currentUser.id });
+    const challenge = challenges.find(c => c._id === challengeId);
+    
+    if (!challenge) {
+      // Если это не наш челлендж, загружаем из общего списка
+      const allChallenges = await client.query("challenges:getAll", {});
+      const foundChallenge = allChallenges.find(c => c._id === challengeId);
+      
+      if (!foundChallenge) {
+        showToast('Челлендж не найден', 'error');
+        return;
+      }
+      
+      // Показываем детали чужого челленджа (без кнопок управления)
+      showChallengeDetailModal(foundChallenge, false);
+      return;
+    }
+    
+    // Показываем детали своего челленджа
+    showChallengeDetailModal(challenge, true);
+    
+  } catch (error) {
+    console.error('Ошибка загрузки челленджа:', error);
+    showToast('Ошибка загрузки челленджа', 'error');
+  }
+}
+
+// Показать модальное окно с деталями челленджа
+function showChallengeDetailModal(challenge, isMine) {
+  const deadline = new Date(challenge.deadline);
+  const donationsAmount = challenge.donationsAmount || 0;
+  const totalAmount = challenge.stakeAmount + donationsAmount;
+  
+  const statusBadge = {
+    active: '<span class="challenge-badge badge-active">Активен</span>',
+    completed: '<span class="challenge-badge badge-completed">Выполнен</span>',
+    failed: '<span class="challenge-badge badge-failed">Провален</span>'
+  };
+  
+  // Кнопки управления только для своих активных челленджей
+  const actionButtons = isMine && challenge.status === 'active' ? `
+    <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <button class="btn btn-success" onclick="completeChallenge('${challenge._id}'); closeModal('challenge-detail-modal');" style="flex: 1;">
+        ✅ Выполнен
+      </button>
+      <button class="btn btn-danger" onclick="failChallenge('${challenge._id}'); closeModal('challenge-detail-modal');" style="flex: 1;">
+        ❌ Провален
+      </button>
+    </div>
+  ` : '';
+  
+  // Создаем модальное окно если его еще нет
+  let modal = document.getElementById('challenge-detail-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'challenge-detail-modal';
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+  }
+  
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Детали челленджа</h2>
+        <button class="close" onclick="closeModal('challenge-detail-modal')">✕</button>
+      </div>
+      
+      <div style="padding: 20px;">
+        <div class="challenge-owner" style="margin-bottom: 16px;">
+          <div class="challenge-owner-avatar">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
+          <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}'); closeModal('challenge-detail-modal');">@${challenge.username || 'Unknown'}</div>
+        </div>
+        
+        ${challenge.imageUrl ? `<img src="${challenge.imageUrl}" style="width: 100%; border-radius: 12px; margin-bottom: 16px;">` : ''}
+        
+        <h3 style="font-size: 20px; margin-bottom: 8px;">${challenge.title}</h3>
+        ${statusBadge[challenge.status]}
+        
+        <p style="margin: 16px 0; opacity: 0.8;">${challenge.description || 'Без описания'}</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;">
+          <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 12px; border-radius: 8px;">
+            <div style="font-size: 13px; opacity: 0.6;">Категория</div>
+            <div style="font-size: 16px; margin-top: 4px;">${getCategoryName(challenge.category)}</div>
+          </div>
+          <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 12px; border-radius: 8px;">
+            <div style="font-size: 13px; opacity: 0.6;">Дедлайн</div>
+            <div style="font-size: 16px; margin-top: 4px;">${deadline.toLocaleDateString('ru-RU')}</div>
+          </div>
+        </div>
+        
+        <div style="background: var(--tg-theme-secondary-bg-color, #232e3c); padding: 16px; border-radius: 12px; margin: 20px 0;">
+          <div style="font-size: 13px; opacity: 0.6; margin-bottom: 8px;">Сумма</div>
+          <div style="font-size: 24px; font-weight: 700; color: #10b981;">$${totalAmount}</div>
+          ${donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Ставка: $${challenge.stakeAmount} + Донаты: $${donationsAmount}</div>` : ''}
+        </div>
+        
+        ${actionButtons}
+      </div>
+    </div>
+  `;
+  
+  modal.classList.add('active');
+  
+  if (tg) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => closeModal('challenge-detail-modal'));
+    tg.HapticFeedback.impactOccurred('medium');
+  }
+}
+
+// Получить название категории
+function getCategoryName(category) {
+  const categories = {
+    health: '🏃 Здоровье и спорт',
+    learning: '📚 Обучение',
+    business: '💼 Бизнес',
+    habits: '🎯 Привычки',
+    creative: '🎨 Творчество',
+    other: '📌 Другое'
+  };
+  return categories[category] || category;
+}
