@@ -70,11 +70,21 @@ export const getAll = query({
 export const getMy = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const challenges = await ctx.db
       .query("challenges")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .collect();
+    
+    // Обогащаем данными пользователя
+    const user = await ctx.db.get(args.userId);
+    
+    return challenges.map(challenge => ({
+      ...challenge,
+      username: user?.username || "Unknown",
+      firstName: user?.firstName || "",
+      photoUrl: user?.photoUrl || "",
+    }));
   },
 });
 
@@ -262,12 +272,22 @@ export const getAllReports = query({
       reports.map(async (report) => {
         const user = await ctx.db.get(report.userId);
         const challenge = await ctx.db.get(report.challengeId);
+        
+        // Получаем донаты для этого челленджа
+        const donations = await ctx.db
+          .query("donations")
+          .withIndex("by_challenge", (q) => q.eq("challengeId", report.challengeId))
+          .collect();
+        
+        const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
+        
         return {
           ...report,
           username: user?.username || "Unknown",
           firstName: user?.firstName || "",
           photoUrl: user?.photoUrl || "",
           challengeTitle: challenge?.title || "Unknown",
+          donationsAmount: totalDonations,
         };
       })
     );

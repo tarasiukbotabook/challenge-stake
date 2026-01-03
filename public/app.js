@@ -1011,6 +1011,10 @@ window.showFeedReports = async function() {
         // Проверяем, это не наш отчёт
         const canDonate = currentUser && report.userId !== currentUser.id;
         
+        // Сумма донатов
+        const donationsAmount = report.donationsAmount || 0;
+        const donationsText = donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">💰 Собрано донатов: $${donationsAmount}</div>` : '';
+        
         return `
           <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s">
             <div class="report-header">
@@ -1020,6 +1024,7 @@ window.showFeedReports = async function() {
                   <div class="report-username" onclick="showUserProfile('${report.userId}')">@${report.username}</div>
                   <div class="report-challenge">${report.challengeTitle}</div>
                   <div class="report-date">${dateStr}</div>
+                  ${donationsText}
                 </div>
               </div>
             </div>
