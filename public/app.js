@@ -505,8 +505,8 @@ function displayChallenges(challenges, isMine, container) {
         <div class="challenge-header">
           <div class="challenge-title">${challenge.title}</div>
           <div style="display: flex; align-items: center; gap: 8px;">
-        </div>
-            <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', `${challenge.title}`)" title="Поделиться">
+            ${statusBadge[challenge.status]}
+            <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="1"></circle>
                 <circle cx="12" cy="5" r="1"></circle>
@@ -514,6 +514,7 @@ function displayChallenges(challenges, isMine, container) {
               </svg>
             </button>
           </div>
+        </div>
         <div class="challenge-description">${challenge.description || 'Без описания'}</div>
         <div class="challenge-meta">
           <span>${challenge.username || 'Вы'}</span>
