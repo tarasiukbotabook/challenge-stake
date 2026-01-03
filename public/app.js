@@ -321,11 +321,10 @@ function updateGreeting() {
     const firstName = user.first_name || 'Пользователь';
     const lastName = user.last_name || '';
     const fullName = `${firstName} ${lastName}`.trim();
-    const username = user.username || 'user';
     
-    // Обновляем имя и username
+    // Обновляем имя
     document.getElementById('user-name').textContent = fullName;
-    document.getElementById('user-username').textContent = `@${username}`;
+    document.getElementById('user-greeting').textContent = `Привет, ${firstName}! 👋`;
     
     // Обновляем аватарку
     const avatarEl = document.getElementById('user-avatar');
@@ -339,7 +338,7 @@ function updateGreeting() {
       avatarEl.textContent = initials;
     }
     
-    console.log('User data updated:', { fullName, username, user });
+    console.log('User data updated:', { fullName, user });
   } else {
     console.log('No Telegram user data available');
   }
@@ -364,40 +363,8 @@ function setupEventListeners() {
 async function loadUserData() {
   if (!currentUser) return;
   
-  // Обновляем header для своего профиля
-  const stats = await client.query("users:getUserStats", { userId: currentUser.id });
-  
-  const avatarEl = document.getElementById('user-avatar');
-  const usernameEl = document.getElementById('user-username');
-  const nameEl = document.getElementById('user-name');
-  const balanceEl = document.getElementById('user-balance');
-  const balanceDisplay = document.querySelector('.profile-balance-display');
-  
-  // Обновляем аватарку
-  if (tg?.initDataUnsafe?.user?.photo_url) {
-    avatarEl.innerHTML = `<img src="${tg.initDataUnsafe.user.photo_url}" alt="${currentUser.username}">`;
-  } else {
-    const initials = (stats.firstName || stats.username).charAt(0).toUpperCase();
-    avatarEl.textContent = initials;
-  }
-  
-  usernameEl.textContent = `@${stats.username}`;
-  nameEl.textContent = stats.firstName || stats.username;
-  balanceEl.textContent = `$${stats.balance}`;
-  
-  // Показываем баланс для своего профиля
-  if (balanceDisplay) {
-    balanceDisplay.style.display = 'flex';
-  }
-  
   await loadStats();
   await loadChallenges('my');
-  
-  // Показываем кнопку "Создать челлендж" для своего профиля
-  const createBtn = document.querySelector('.btn-primary.btn-block');
-  if (createBtn) {
-    createBtn.style.display = 'block';
-  }
 }
 
 // Загрузка статистики
@@ -411,7 +378,6 @@ async function loadStats() {
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
     document.getElementById('stat-active').textContent = stats.active;
-    document.getElementById('stat-reports').textContent = stats.reports || 0;
     document.getElementById('user-balance').textContent = `$${stats.balance}`;
     
     // Показываем статистику с анимацией
@@ -424,7 +390,6 @@ async function loadStats() {
     animateValue('stat-total', 0, stats.total, 800);
     animateValue('stat-completed', 0, stats.completed, 800);
     animateValue('stat-active', 0, stats.active, 800);
-    animateValue('stat-reports', 0, stats.reports || 0, 800);
   } catch (error) {
     console.error('Ошибка загрузки статистики:', error);
   }
@@ -469,6 +434,7 @@ async function loadChallenges(type) {
   container.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка...</div>
     </div>
   `;
   
@@ -519,42 +485,41 @@ function displayChallenges(challenges, isMine, container) {
       failed: '<span class="challenge-badge badge-failed">Провален</span>'
     };
 
-    const actions = isMine && challenge.status === 'active' ? '' : !isMine && challenge.status === 'active' ? `
-      <div class="challenge-actions">
-        <button class="btn btn-sm btn-primary" onclick="window.showDonateModal('${challenge._id}')">
-          💰 Поддержать
-        </button>
-      </div>
+    const donateButton = !isMine && challenge.status === 'active' ? `
+      <button class="btn-donate" onclick="window.showDonateModal('${challenge._id}')">
+        💰 Поддержать
+      </button>
     ` : '';
 
     return `
-      <div class="challenge-card ${challenge.status}" data-challenge-id="${challenge._id}">
+      <div class="challenge-card" data-challenge-id="${challenge._id}">
         <div class="challenge-owner">
           <div class="challenge-owner-avatar">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
-          <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}')">@${challenge.username || 'Unknown'}</div>
-        </div>
-        <div class="challenge-header">
-          <div class="challenge-title" onclick="window.showChallengeDetail('${challenge._id}')" style="cursor: pointer;">${challenge.title}</div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            ${statusBadge[challenge.status]}
-            <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="12" cy="5" r="1"></circle>
-                <circle cx="12" cy="19" r="1"></circle>
-              </svg>
-            </button>
+          <div style="flex: 1; min-width: 0;">
+            <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}')">@${challenge.username || 'Unknown'}</div>
+            <div class="challenge-meta">
+              <span>${deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+              <span>•</span>
+              <span>${statusBadge[challenge.status]}</span>
+            </div>
           </div>
+          <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
         </div>
-        <div class="challenge-description">${challenge.description || 'Без описания'}</div>
-        <div class="challenge-meta">
-          <span>${deadline.toLocaleDateString('ru-RU')}</span>
-        </div>
+        <div class="challenge-title" onclick="window.showChallengeDetail('${challenge._id}')" style="cursor: pointer; margin-top: 8px;">${challenge.title}</div>
         <div class="challenge-stake">
-          <div style="font-size: 20px; font-weight: 700; color: #10b981;">$${totalAmount}</div>
-          ${donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Ставка: $${challenge.stakeAmount} + Донаты: $${donationsAmount}</div>` : ''}
+          <div class="challenge-stake-amount">
+            <span class="currency">$</span>
+            <span class="amount">${totalAmount}</span>
+            ${donationsAmount > 0 ? `<span class="challenge-stake-details">(${challenge.stakeAmount} + ${donationsAmount})</span>` : ''}
+          </div>
+          ${donateButton}
         </div>
-        ${actions}
       </div>
     `;
   }).join('');
@@ -1065,6 +1030,7 @@ window.showFeedReports = async function() {
   feedList.innerHTML = `
     <div style="text-align: center; padding: 40px; opacity: 0.5;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка отчётов...</div>
     </div>
   `;
   
@@ -1100,7 +1066,7 @@ window.showFeedReports = async function() {
         const donationsText = donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">💰 Собрано донатов: $${donationsAmount}</div>` : '';
         
         return `
-          <div class="report-card" data-report-id="${report._id}">
+          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s" data-report-id="${report._id}">
             <div class="report-header">
               <div class="report-user">
                 <div class="report-avatar">${avatarHtml}</div>
@@ -1181,14 +1147,19 @@ window.closeModal = function(modalId) {
 window.showUserProfile = async function(userId) {
   console.log('=== showUserProfile called:', userId);
   
-  // Переключаемся на main-screen
-  switchScreen('main');
+  // Скрываем нижнее меню
+  document.querySelector('.bottom-nav').style.display = 'none';
   
-  // Показываем загрузку в списке челленджей
-  const challengesList = document.getElementById('challenges-list');
-  challengesList.innerHTML = `
+  // Показываем экран профиля
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('user-profile-screen').classList.add('active');
+  
+  // Показываем загрузку
+  const profileContent = document.getElementById('profile-content');
+  profileContent.innerHTML = `
     <div style="text-align: center; padding: 40px;">
       <div style="font-size: 32px; margin-bottom: 12px;">⏳</div>
+      <div>Загрузка профиля...</div>
     </div>
   `;
   
@@ -1196,8 +1167,12 @@ window.showUserProfile = async function(userId) {
     // Загружаем данные пользователя
     console.log('Loading user stats for:', userId);
     const stats = await client.query("users:getUserStats", { userId });
-    const challenges = await client.query("challenges:getMy", { userId });
     console.log('Stats received:', stats);
+    console.log('Stats username:', stats.username);
+    console.log('Stats firstName:', stats.firstName);
+    console.log('Stats photoUrl:', stats.photoUrl);
+    
+    const challenges = await client.query("challenges:getMy", { userId });
     console.log('Challenges received:', challenges.length);
     
     // Получаем информацию о пользователе из stats
@@ -1210,56 +1185,53 @@ window.showUserProfile = async function(userId) {
     
     console.log('User data:', user);
     
-    const isOwnProfile = userId === currentUser?.id;
+    // Аватарка
+    const avatarHtml = user.photoUrl 
+      ? `<img src="${user.photoUrl}" alt="${user.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+      : (user.firstName || user.username).charAt(0).toUpperCase();
     
-    // Обновляем header
-    const avatarEl = document.getElementById('user-avatar');
-    const usernameEl = document.getElementById('user-username');
-    const nameEl = document.getElementById('user-name');
-    const balanceEl = document.getElementById('user-balance');
-    const balanceDisplay = document.querySelector('.profile-balance-display');
-    
-    if (user.photoUrl) {
-      avatarEl.innerHTML = `<img src="${user.photoUrl}" alt="${user.username}">`;
-    } else {
-      const initials = (user.firstName || user.username).charAt(0).toUpperCase();
-      avatarEl.textContent = initials;
-    }
-    
-    usernameEl.textContent = `@${user.username}`;
-    nameEl.textContent = user.firstName || user.username;
-    
-    // Показываем/скрываем баланс
-    if (isOwnProfile) {
-      balanceDisplay.style.display = 'flex';
-      balanceEl.textContent = `$${user.balance}`;
-    } else {
-      balanceDisplay.style.display = 'none';
-    }
-    
-    // Обновляем статистику
-    document.getElementById('stat-total').textContent = stats.total;
-    document.getElementById('stat-completed').textContent = stats.completed;
-    document.getElementById('stat-active').textContent = stats.active;
-    document.getElementById('stat-reports').textContent = stats.reports || 0;
-    
-    // Показываем статистику
-    const statsEl = document.getElementById('stats-compact');
-    if (statsEl) {
-      statsEl.style.opacity = '1';
-    }
-    
-    // Скрываем кнопку "Создать челлендж" если это не наш профиль
-    const createBtn = document.querySelector('.btn-primary.btn-block');
-    if (createBtn) {
-      if (isOwnProfile) {
-        createBtn.style.display = 'block';
-      } else {
-        createBtn.style.display = 'none';
-      }
-    }
+    profileContent.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${avatarHtml}</div>
+        <h2 class="profile-username">@${user.username}</h2>
+        ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+        <button class="btn btn-sm" onclick="shareProfile('${user.username}')" style="margin-top: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          Поделиться профилем
+        </button>
+      </div>
+      
+      <div class="stats-compact" style="opacity: 1; margin: 20px 0;">
+        <div class="stat-item">
+          <div class="stat-number">${stats.total}</div>
+          <div class="stat-text">Всего</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">${stats.completed}</div>
+          <div class="stat-text">Выполнено</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">${stats.active}</div>
+          <div class="stat-text">Активных</div>
+        </div>
+      </div>
+      
+      <div style="padding: 0 16px;">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Челленджи</h3>
+        <div id="user-challenges-list"></div>
+      </div>
+    `;
     
     // Отображаем челленджи
+    const challengesList = document.getElementById('user-challenges-list');
     if (challenges.length === 0) {
       challengesList.innerHTML = `
         <div class="empty-state">
@@ -1268,12 +1240,12 @@ window.showUserProfile = async function(userId) {
         </div>
       `;
     } else {
-      displayChallenges(challenges, isOwnProfile, challengesList);
+      displayChallenges(challenges, false, challengesList);
     }
     
   } catch (error) {
     console.error('Ошибка загрузки профиля:', error);
-    challengesList.innerHTML = `
+    profileContent.innerHTML = `
       <div class="empty-state">
         <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
         <div class="empty-text">Ошибка загрузки профиля</div>
@@ -1283,14 +1255,20 @@ window.showUserProfile = async function(userId) {
   }
   
   if (tg) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(closeUserProfile);
     tg.HapticFeedback.impactOccurred('light');
   }
 }
 
-// Закрыть профиль пользователя (больше не нужна, но оставим для совместимости)
+// Закрыть профиль пользователя
 window.closeUserProfile = function() {
-  // Просто переключаемся на ленту
+  document.querySelector('.bottom-nav').style.display = 'flex';
   switchScreen('feed');
+  
+  if (tg) {
+    tg.BackButton.hide();
+  }
 }
 
 

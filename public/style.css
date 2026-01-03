@@ -150,146 +150,6 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* New Profile Header */
-.profile-header-new {
-  position: relative;
-  flex-direction: row;
-  padding: 16px 52px 16px 20px;
-  align-items: center;
-  gap: 12px;
-}
-
-.profile-header-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: left;
-  flex: 1;
-  gap: 12px;
-  min-width: 0;
-}
-
-.user-avatar-large {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  overflow: hidden;
-  border: 2px solid rgba(139, 92, 246, 0.3);
-  flex-shrink: 0;
-}
-
-.user-avatar-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-info {
-  flex: 1;
-  min-width: 0;
-  max-width: 140px;
-}
-
-.profile-username {
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.6;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-name {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.profile-balance-display {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.balance-label {
-  font-size: 10px;
-  opacity: 0.6;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.balance-value {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #10b981;
-}
-
-.btn-icon-small {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-icon-small:active {
-  transform: scale(0.9);
-}
-
-.btn-icon-small svg {
-  width: 12px;
-  height: 12px;
-}
-
-.btn-settings {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-settings:active {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-50%) scale(0.95);
-}
-
 .btn-back {
   width: 40px;
   height: 40px;
@@ -457,25 +317,25 @@ body {
 }
 
 /* Challenges */
-#challenges-list {
-  padding: 16px;
+#challenges-list,
+#feed-list {
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .challenge-card {
-  background: rgba(26, 31, 38, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 0;
-  margin-bottom: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  padding: 12px 16px;
   transition: all 0.2s;
-  overflow: hidden;
 }
 
 .challenge-card:active {
-  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .challenge-header {
@@ -483,13 +343,13 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 8px;
-  padding: 12px 12px 0;
 }
 
 .challenge-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 400;
   flex: 1;
+  line-height: 1.4;
 }
 
 .challenge-badge {
@@ -516,32 +376,56 @@ body {
 
 .challenge-description {
   font-size: 14px;
-  opacity: 0.7;
-  margin-bottom: 12px;
-  padding: 0 12px;
+  opacity: 0.6;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  display: none; /* Скрываем описание в карточке, показываем только в модале */
 }
 
 .challenge-meta {
   display: flex;
-  gap: 16px;
+  gap: 8px;
   font-size: 13px;
-  opacity: 0.6;
+  opacity: 0.5;
   margin-bottom: 12px;
-  padding: 0 12px;
+  align-items: center;
 }
 
 .challenge-stake {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.challenge-stake-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.challenge-stake-amount .currency {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.challenge-stake-amount .amount {
+  font-size: 18px;
   font-weight: 700;
   color: #10b981;
-  margin-bottom: 12px;
-  padding: 0 12px;
+}
+
+.challenge-stake-details {
+  font-size: 12px;
+  opacity: 0.5;
 }
 
 .challenge-actions {
   display: flex;
   gap: 8px;
-  padding: 0 12px 12px;
 }
 
 /* Empty State */
@@ -574,7 +458,7 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: flex-end;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   z-index: 100;
 }
@@ -608,6 +492,7 @@ body {
 
 .nav-btn-add {
   position: relative;
+  margin-bottom: 10px;
 }
 
 .nav-icon-add {
@@ -692,6 +577,27 @@ body {
 .btn-sm {
   padding: 8px 16px;
   font-size: 14px;
+}
+
+.btn-donate {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-donate:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.btn-donate:active {
+  transform: scale(0.95);
 }
 
 .btn-block {
@@ -830,12 +736,17 @@ form {
 
 /* Report Cards */
 .report-card {
-  background: rgba(26, 31, 38, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  padding: 12px 16px;
+  margin: 0;
   transition: all 0.2s;
+}
+
+.report-card:active {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .report-header {
@@ -849,52 +760,65 @@ form {
 .report-user {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
 }
 
 .report-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
+.report-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .report-username {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.report-username:hover {
+  text-decoration: underline;
 }
 
 .report-challenge {
   font-size: 13px;
-  opacity: 0.6;
+  opacity: 0.5;
   margin-top: 2px;
 }
 
 .report-date {
-  font-size: 12px;
+  font-size: 13px;
   opacity: 0.5;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .report-content {
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.4;
   margin-bottom: 12px;
   white-space: pre-wrap;
+  margin-left: 46px;
 }
 
 .report-image {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 12px;
+  margin-left: 46px;
+  max-width: calc(100% - 46px);
 }
 
 .report-link {
@@ -903,6 +827,7 @@ form {
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
+  margin-left: 46px;
 }
 
 .report-link:hover {
@@ -929,6 +854,19 @@ form {
   overflow: hidden;
 }
 
+.profile-username {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #8b5cf6;
+}
+
+.profile-name {
+  font-size: 16px;
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+
 .report-user-info {
   flex: 1;
   min-width: 0;
@@ -948,31 +886,31 @@ form {
 .challenge-owner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .challenge-owner-avatar {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 11px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .challenge-owner-username {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 500;
+  font-size: 12px;
   cursor: pointer;
   transition: color 0.2s;
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .challenge-owner-username:hover {

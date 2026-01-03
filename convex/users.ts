@@ -182,18 +182,11 @@ export const getUserStats = query({
     const failed = allChallenges.filter((c) => c.status === "failed").length;
     const active = allChallenges.filter((c) => c.status === "active").length;
 
-    // Подсчитываем количество отчётов
-    const reports = await ctx.db
-      .query("progressUpdates")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
-      .collect();
-
     return {
       total: allChallenges.length,
       completed,
       failed,
       active,
-      reports: reports.length,
       balance: user.balance,
       premium: user.premium,
       username: user.username,
