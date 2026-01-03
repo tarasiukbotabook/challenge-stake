@@ -364,6 +364,32 @@ function setupEventListeners() {
 async function loadUserData() {
   if (!currentUser) return;
   
+  // Обновляем header для своего профиля
+  const stats = await client.query("users:getUserStats", { userId: currentUser.id });
+  
+  const avatarEl = document.getElementById('user-avatar');
+  const usernameEl = document.getElementById('user-username');
+  const nameEl = document.getElementById('user-name');
+  const balanceEl = document.getElementById('user-balance');
+  const balanceDisplay = document.querySelector('.profile-balance-display');
+  
+  // Обновляем аватарку
+  if (tg?.initDataUnsafe?.user?.photo_url) {
+    avatarEl.innerHTML = `<img src="${tg.initDataUnsafe.user.photo_url}" alt="${currentUser.username}">`;
+  } else {
+    const initials = (stats.firstName || stats.username).charAt(0).toUpperCase();
+    avatarEl.textContent = initials;
+  }
+  
+  usernameEl.textContent = `@${stats.username}`;
+  nameEl.textContent = stats.firstName || stats.username;
+  balanceEl.textContent = `$${stats.balance}`;
+  
+  // Показываем баланс для своего профиля
+  if (balanceDisplay) {
+    balanceDisplay.style.display = 'flex';
+  }
+  
   await loadStats();
   await loadChallenges('my');
   
@@ -503,7 +529,7 @@ function displayChallenges(challenges, isMine, container) {
     ` : '';
 
     return `
-      <div class="challenge-card ${challenge.status} animate-in" style="animation-delay: ${index * 0.1}s" data-challenge-id="${challenge._id}">
+      <div class="challenge-card ${challenge.status}" data-challenge-id="${challenge._id}">
         <div class="challenge-owner">
           <div class="challenge-owner-avatar">${challenge.photoUrl ? `<img src="${challenge.photoUrl}" alt="${challenge.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : (challenge.firstName || challenge.username || 'U').charAt(0).toUpperCase()}</div>
           <div class="challenge-owner-username" onclick="showUserProfile('${challenge.userId}')">@${challenge.username || 'Unknown'}</div>
@@ -1076,7 +1102,7 @@ window.showFeedReports = async function() {
         const donationsText = donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">💰 Собрано донатов: $${donationsAmount}</div>` : '';
         
         return `
-          <div class="report-card animate-in" style="animation-delay: ${index * 0.1}s" data-report-id="${report._id}">
+          <div class="report-card" data-report-id="${report._id}">
             <div class="report-header">
               <div class="report-user">
                 <div class="report-avatar">${avatarHtml}</div>
@@ -1187,11 +1213,14 @@ window.showUserProfile = async function(userId) {
     
     console.log('User data:', user);
     
+    const isOwnProfile = userId === currentUser?.id;
+    
     // Обновляем header
     const avatarEl = document.getElementById('user-avatar');
     const usernameEl = document.getElementById('user-username');
     const nameEl = document.getElementById('user-name');
     const balanceEl = document.getElementById('user-balance');
+    const balanceDisplay = document.querySelector('.profile-balance-display');
     
     if (user.photoUrl) {
       avatarEl.innerHTML = `<img src="${user.photoUrl}" alt="${user.username}">`;
@@ -1202,7 +1231,14 @@ window.showUserProfile = async function(userId) {
     
     usernameEl.textContent = `@${user.username}`;
     nameEl.textContent = user.firstName || user.username;
-    balanceEl.textContent = `$${user.balance}`;
+    
+    // Показываем/скрываем баланс
+    if (isOwnProfile) {
+      balanceDisplay.style.display = 'flex';
+      balanceEl.textContent = `$${user.balance}`;
+    } else {
+      balanceDisplay.style.display = 'none';
+    }
     
     // Обновляем статистику
     document.getElementById('stat-total').textContent = stats.total;
@@ -1219,7 +1255,7 @@ window.showUserProfile = async function(userId) {
     // Скрываем кнопку "Создать челлендж" если это не наш профиль
     const createBtn = document.querySelector('.btn-primary.btn-block');
     if (createBtn) {
-      if (userId === currentUser?.id) {
+      if (isOwnProfile) {
         createBtn.style.display = 'block';
       } else {
         createBtn.style.display = 'none';
@@ -1235,7 +1271,7 @@ window.showUserProfile = async function(userId) {
         </div>
       `;
     } else {
-      displayChallenges(challenges, userId === currentUser?.id, challengesList);
+      displayChallenges(challenges, isOwnProfile, challengesList);
     }
     
   } catch (error) {
