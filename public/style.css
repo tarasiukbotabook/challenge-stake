@@ -318,7 +318,8 @@ body {
 
 /* Challenges */
 #challenges-list,
-#feed-list {
+#feed-list,
+#user-challenges-list {
   padding: 8px;
   display: flex;
   flex-direction: column;
