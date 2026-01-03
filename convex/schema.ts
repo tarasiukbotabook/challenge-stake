@@ -20,6 +20,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     stakeAmount: v.number(),
+    donationsAmount: v.optional(v.number()), // Сумма донатов
     deadline: v.string(),
     status: v.string(), // 'active', 'completed', 'failed'
     category: v.string(),
@@ -27,6 +28,14 @@ export default defineSchema({
     completedAt: v.optional(v.string()),
   }).index("by_user", ["userId"])
     .index("by_status", ["status"]),
+
+  donations: defineTable({
+    challengeId: v.id("challenges"),
+    donorUserId: v.id("users"),
+    amount: v.number(),
+    message: v.optional(v.string()),
+  }).index("by_challenge", ["challengeId"])
+    .index("by_donor", ["donorUserId"]),
 
   progressUpdates: defineTable({
     challengeId: v.id("challenges"),

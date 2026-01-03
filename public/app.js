@@ -127,9 +127,9 @@ function switchScreen(screenName) {
     navBtns[activeIndex].classList.add('active');
   }
   
-  // Load data for feed screen
+  // Load data for feed screen - показываем отчёты по умолчанию
   if (screenName === 'feed') {
-    showChallenges('all');
+    showFeedReports();
   }
   
   if (tg) {
@@ -228,7 +228,7 @@ async function autoLogin() {
       console.log('Registration successful:', result);
       
       // Показываем приветствие
-      showToast(`Вы получили стартовый бонус 1000₽!`, 'success', `Добро пожаловать, ${telegramUser.first_name}! 🎉`);
+      showToast(`Вы получили стартовый бонус $1000!`, 'success', `Добро пожаловать, ${telegramUser.first_name}! 🎉`);
       
       return true;
     } catch (regError) {
@@ -332,6 +332,7 @@ function setupEventListeners() {
   document.getElementById('create-challenge-form').addEventListener('submit', handleCreateChallenge);
   document.getElementById('add-balance-form').addEventListener('submit', handleAddBalance);
   document.getElementById('add-progress-form').addEventListener('submit', handleAddProgress);
+  document.getElementById('donate-form').addEventListener('submit', handleDonate);
 }
 
 // Загрузка данных пользователя
@@ -353,7 +354,7 @@ async function loadStats() {
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-completed').textContent = stats.completed;
     document.getElementById('stat-active').textContent = stats.active;
-    document.getElementById('user-balance').textContent = `${stats.balance}₽`;
+    document.getElementById('user-balance').textContent = `$${stats.balance}`;
     
     // Показываем статистику с анимацией
     const statsEl = document.getElementById('stats-compact');
@@ -443,14 +444,8 @@ function displayChallenges(challenges, isMine, container) {
 
   container.innerHTML = challenges.map((challenge, index) => {
     const deadline = new Date(challenge.deadline);
-    const categoryEmoji = {
-      health: '🏃',
-      learning: '📚',
-      business: '💼',
-      habits: '🎯',
-      creative: '🎨',
-      other: '📌'
-    };
+    const donationsAmount = challenge.donationsAmount || 0;
+    const totalAmount = challenge.stakeAmount + donationsAmount;
 
     const statusBadge = {
       active: '<span class="challenge-badge badge-active">Активен</span>',
@@ -470,6 +465,12 @@ function displayChallenges(challenges, isMine, container) {
           Провален
         </button>
       </div>
+    ` : !isMine && challenge.status === 'active' ? `
+      <div class="challenge-actions">
+        <button class="btn btn-sm btn-primary" onclick="window.showDonateModal('${challenge._id}')">
+          💰 Поддержать
+        </button>
+      </div>
     ` : '';
 
     return `
@@ -483,7 +484,10 @@ function displayChallenges(challenges, isMine, container) {
           <span>${challenge.username || 'Вы'}</span>
           <span>${deadline.toLocaleDateString('ru-RU')}</span>
         </div>
-        <div class="challenge-stake">${challenge.stakeAmount}₽</div>
+        <div class="challenge-stake">
+          <div style="font-size: 20px; font-weight: 700; color: #10b981;">$${totalAmount}</div>
+          ${donationsAmount > 0 ? `<div style="font-size: 13px; opacity: 0.7; margin-top: 4px;">Ставка: $${challenge.stakeAmount} + Донаты: $${donationsAmount}</div>` : ''}
+        </div>
         ${actions}
       </div>
     `;
@@ -586,6 +590,16 @@ window.showProgressModal = function(challengeId) {
   }
 }
 
+// Показать модальное окно доната
+window.showDonateModal = function(challengeId) {
+  currentChallengeId = challengeId;
+  document.getElementById('donate-modal').classList.add('active');
+  if (tg) {
+    tg.BackButton.show();
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
 // Добавление прогресса
 async function handleAddProgress(e) {
   e.preventDefault();
@@ -626,7 +640,7 @@ async function handleAddBalance(e) {
       amount
     });
     
-    showToast(`Баланс пополнен на ${amount}₽`, 'success', 'Баланс пополнен! 💰');
+    showToast(`Баланс пополнен на $${amount}`, 'success', 'Баланс пополнен! 💰');
     
     closeModal('balance-modal');
     e.target.reset();
@@ -634,6 +648,39 @@ async function handleAddBalance(e) {
   } catch (error) {
     console.error('Ошибка пополнения баланса:', error);
     showToast(error.message || 'Ошибка пополнения баланса', 'error');
+  }
+}
+
+// Донат на челлендж
+async function handleDonate(e) {
+  e.preventDefault();
+  
+  if (!currentUser || !currentChallengeId) return;
+
+  const donateData = {
+    challengeId: currentChallengeId,
+    donorUserId: currentUser.id,
+    amount: parseFloat(document.getElementById('donate-amount').value),
+    message: document.getElementById('donate-message').value || undefined
+  };
+
+  try {
+    await client.mutation("challenges:donate", donateData);
+    
+    showToast('Спасибо за поддержку!', 'success', 'Донат отправлен! 💰');
+    
+    closeModal('donate-modal');
+    e.target.reset();
+    await loadStats();
+    
+    // Обновляем список челленджей
+    const feedList = document.getElementById('feed-list');
+    if (feedList && feedList.innerHTML) {
+      await loadChallenges('all');
+    }
+  } catch (error) {
+    console.error('Ошибка доната:', error);
+    showToast(error.message || 'Ошибка доната', 'error');
   }
 }
 

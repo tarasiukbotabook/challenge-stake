@@ -90,11 +90,11 @@
       <div class="container">
         <!-- Tabs -->
         <div class="tabs">
-          <button class="tab-btn active" onclick="showChallenges('all')">
-            Все челленджи
-          </button>
-          <button class="tab-btn" onclick="showFeedReports()">
+          <button class="tab-btn active" onclick="showFeedReports()">
             Отчёты
+          </button>
+          <button class="tab-btn" onclick="showChallenges('all')">
+            Все челленджи
           </button>
         </div>
 
@@ -248,11 +248,41 @@
           </div>
 
           <div class="info-box">
-            📱 Поделитесь прогрессом в Telegram для виральности!
+            Поделитесь прогрессом в Telegram для виральности!
           </div>
 
           <button type="submit" class="btn btn-primary btn-block">
             Добавить прогресс
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Donate Modal -->
+    <div id="donate-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Поддержать челлендж</h2>
+          <button class="close" onclick="closeModal('donate-modal')">✕</button>
+        </div>
+        
+        <form id="donate-form">
+          <div class="form-group">
+            <label class="form-label">Сумма ($)</label>
+            <input type="number" class="form-input" id="donate-amount" placeholder="10" min="1" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Сообщение (опционально)</label>
+            <textarea class="form-textarea" id="donate-message" placeholder="Верю в тебя! 💪" rows="3"></textarea>
+          </div>
+
+          <div class="info-box">
+            Если автор выполнит челлендж, он получит ваш донат. Если провалит - средства пойдут на благотворительность.
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Задонатить
           </button>
         </form>
       </div>

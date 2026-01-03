@@ -96,16 +96,18 @@ export const complete = mutation({
       completedAt: new Date().toISOString(),
     });
 
+    // Возвращаем ставку + донаты
+    const totalReturn = challenge.stakeAmount + (challenge.donationsAmount || 0);
     await ctx.db.patch(args.userId, {
-      balance: user.balance + challenge.stakeAmount,
+      balance: user.balance + totalReturn,
     });
 
     await ctx.db.insert("transactions", {
       userId: args.userId,
       challengeId: args.challengeId,
-      amount: challenge.stakeAmount,
+      amount: totalReturn,
       type: "refund",
-      description: "Возврат ставки за выполненный челлендж",
+      description: `Возврат ставки + донаты за выполненный челлендж`,
     });
 
     return { success: true };
@@ -126,15 +128,17 @@ export const fail = mutation({
       status: "failed",
     });
 
-    const platformFee = challenge.stakeAmount * 0.05;
-    const charityAmount = challenge.stakeAmount - platformFee;
+    // Ставка + донаты идут на благотворительность
+    const totalAmount = challenge.stakeAmount + (challenge.donationsAmount || 0);
+    const platformFee = totalAmount * 0.05;
+    const charityAmount = totalAmount - platformFee;
 
     await ctx.db.insert("transactions", {
       userId: args.userId,
       challengeId: args.challengeId,
       amount: charityAmount,
       type: "charity",
-      description: "Перевод на благотворительность",
+      description: "Перевод на благотворительность (ставка + донаты)",
     });
 
     return { success: true };
@@ -168,5 +172,79 @@ export const getProgress = query({
       .withIndex("by_challenge", (q) => q.eq("challengeId", args.challengeId))
       .order("desc")
       .collect();
+  },
+});
+
+export const donate = mutation({
+  args: {
+    challengeId: v.id("challenges"),
+    donorUserId: v.id("users"),
+    amount: v.number(),
+    message: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (!challenge) throw new Error("Челлендж не найден");
+    if (challenge.status !== "active") throw new Error("Челлендж неактивен");
+
+    const donor = await ctx.db.get(args.donorUserId);
+    if (!donor) throw new Error("Пользователь не найден");
+
+    if (donor.balance < args.amount) {
+      throw new Error("Недостаточно средств на балансе");
+    }
+
+    // Списываем с баланса донора
+    await ctx.db.patch(args.donorUserId, {
+      balance: donor.balance - args.amount,
+    });
+
+    // Добавляем донат
+    const donationId = await ctx.db.insert("donations", {
+      challengeId: args.challengeId,
+      donorUserId: args.donorUserId,
+      amount: args.amount,
+      message: args.message,
+    });
+
+    // Обновляем сумму донатов в челлендже
+    const currentDonations = challenge.donationsAmount || 0;
+    await ctx.db.patch(args.challengeId, {
+      donationsAmount: currentDonations + args.amount,
+    });
+
+    // Транзакция
+    await ctx.db.insert("transactions", {
+      userId: args.donorUserId,
+      challengeId: args.challengeId,
+      amount: -args.amount,
+      type: "donation",
+      description: `Донат на челлендж: ${challenge.title}`,
+    });
+
+    return { donationId };
+  },
+});
+
+export const getDonations = query({
+  args: { challengeId: v.id("challenges") },
+  handler: async (ctx, args) => {
+    const donations = await ctx.db
+      .query("donations")
+      .withIndex("by_challenge", (q) => q.eq("challengeId", args.challengeId))
+      .collect();
+
+    const enriched = await Promise.all(
+      donations.map(async (donation) => {
+        const donor = await ctx.db.get(donation.donorUserId);
+        return {
+          ...donation,
+          donorUsername: donor?.username || "Anonymous",
+          donorFirstName: donor?.firstName || "",
+        };
+      })
+    );
+
+    return enriched;
   },
 });
