@@ -242,6 +242,9 @@ async function autoLogin() {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('=== App initialization started ===');
   
+  const startTime = Date.now();
+  const minLoadingTime = 800; // Минимальное время показа загрузки
+  
   try {
     // Инициализируем Telegram
     console.log('Initializing Telegram...');
@@ -255,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (loggedIn) {
       console.log('Loading user data...');
-      await loadUserData();
+      await loadUserData(); // Ждем пока данные загрузятся
       console.log('Updating greeting...');
       updateGreeting();
     } else {
@@ -276,9 +279,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Error:', error);
     console.error('Stack:', error.stack);
   } finally {
-    // Always hide loading screen
-    console.log('Hiding loading screen...');
-    hideLoading();
+    // Убедимся что загрузка показывалась минимум minLoadingTime мс
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+    
+    console.log(`Elapsed time: ${elapsedTime}ms, waiting ${remainingTime}ms more...`);
+    
+    setTimeout(() => {
+      console.log('Hiding loading screen...');
+      hideLoading();
+    }, remainingTime);
   }
 });
 
