@@ -396,11 +396,19 @@ function animateValue(id, start, end, duration) {
 async function loadChallenges(type) {
   if (!currentUser) return;
   
-  const container = type === 'my' 
-    ? document.getElementById('challenges-list')
-    : document.getElementById('feed-list');
+  // Определяем контейнер в зависимости от того, где мы находимся
+  let container;
+  if (type === 'my') {
+    container = document.getElementById('challenges-list');
+  } else {
+    // Для 'all' всегда используем feed-list
+    container = document.getElementById('feed-list');
+  }
   
-  if (!container) return;
+  if (!container) {
+    console.error('Container not found for type:', type);
+    return;
+  }
   
   // Показываем индикатор загрузки
   container.innerHTML = `
@@ -415,14 +423,14 @@ async function loadChallenges(type) {
     if (type === 'my') {
       challenges = await client.query("challenges:getMy", { userId: currentUser.id });
     } else {
-      challenges = await client.query("challenges:getAll");
+      challenges = await client.query("challenges:getAll", {});
     }
     displayChallenges(challenges, type === 'my', container);
   } catch (error) {
     console.error('Ошибка загрузки челленджей:', error);
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">❌</div>
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
         <div class="empty-text">Ошибка загрузки</div>
       </div>
     `;
@@ -812,11 +820,18 @@ window.showChallenges = function(type) {
 
 // Показать отчёты в ленте
 window.showFeedReports = async function() {
+  console.log('=== showFeedReports called ===');
+  
   const tabs = document.querySelectorAll('#feed-screen .tab-btn');
   tabs.forEach(tab => tab.classList.remove('active'));
   tabs[0].classList.add('active');
   
   const feedList = document.getElementById('feed-list');
+  
+  if (!feedList) {
+    console.error('feed-list element not found!');
+    return;
+  }
   
   // Показываем индикатор загрузки
   feedList.innerHTML = `
@@ -827,7 +842,9 @@ window.showFeedReports = async function() {
   `;
   
   try {
-    const reports = await client.query("challenges:getAllReports");
+    console.log('Fetching reports...');
+    const reports = await client.query("challenges:getAllReports", {});
+    console.log('Reports received:', reports.length);
     
     if (reports.length === 0) {
       feedList.innerHTML = `
@@ -838,6 +855,7 @@ window.showFeedReports = async function() {
         </div>
       `;
     } else {
+      console.log('Rendering reports...');
       feedList.innerHTML = reports.map((report, index) => {
         const date = new Date(report._creationTime);
         return `
@@ -858,13 +876,17 @@ window.showFeedReports = async function() {
           </div>
         `;
       }).join('');
+      console.log('Reports rendered successfully');
     }
   } catch (error) {
-    console.error('Ошибка загрузки отчётов:', error);
+    console.error('=== Error loading reports ===');
+    console.error('Error:', error);
+    console.error('Message:', error.message);
     feedList.innerHTML = `
       <div class="empty-state">
         <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">❌</div>
         <div class="empty-text">Ошибка загрузки отчётов</div>
+        <p style="opacity: 0.6; margin-top: 8px;">${error.message}</p>
       </div>
     `;
   }
