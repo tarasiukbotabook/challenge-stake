@@ -46,11 +46,18 @@ function hideLoading() {
   const loadingScreen = document.getElementById('loading-screen');
   const app = document.getElementById('app');
   
+  if (!loadingScreen || !app) {
+    console.error('Loading screen or app element not found');
+    return;
+  }
+  
   loadingScreen.classList.add('fade-out');
   app.style.display = 'block';
   
   setTimeout(() => {
-    loadingScreen.remove();
+    if (loadingScreen.parentNode) {
+      loadingScreen.remove();
+    }
   }, 300);
 }
 
@@ -183,27 +190,46 @@ async function autoLogin() {
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async () => {
-  // Инициализируем Telegram
-  const isTelegram = initTelegram();
+  console.log('=== App initialization started ===');
   
-  // Автоматическая авторизация
-  const loggedIn = await autoLogin();
-  
-  if (loggedIn) {
-    await loadUserData();
-    updateGreeting();
-  } else {
-    // Если не в Telegram, показываем заглушку
-    if (!isTelegram) {
-      document.getElementById('user-greeting').textContent = 
-        'Откройте приложение в Telegram для авторизации';
+  try {
+    // Инициализируем Telegram
+    console.log('Initializing Telegram...');
+    const isTelegram = initTelegram();
+    console.log('Telegram initialized:', isTelegram);
+    
+    // Автоматическая авторизация
+    console.log('Starting auto login...');
+    const loggedIn = await autoLogin();
+    console.log('Login result:', loggedIn);
+    
+    if (loggedIn) {
+      console.log('Loading user data...');
+      await loadUserData();
+      console.log('Updating greeting...');
+      updateGreeting();
+    } else {
+      // Если не в Telegram, показываем заглушку
+      if (!isTelegram) {
+        const greetingEl = document.getElementById('user-greeting');
+        if (greetingEl) {
+          greetingEl.textContent = 'Откройте приложение в Telegram для авторизации';
+        }
+      }
     }
-  }
 
-  setupEventListeners();
-  
-  // Hide loading screen
-  hideLoading();
+    console.log('Setting up event listeners...');
+    setupEventListeners();
+    console.log('=== App initialization completed ===');
+  } catch (error) {
+    console.error('=== Initialization error ===');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
+  } finally {
+    // Always hide loading screen
+    console.log('Hiding loading screen...');
+    hideLoading();
+  }
 });
 
 // Обновление приветствия и аватарки
