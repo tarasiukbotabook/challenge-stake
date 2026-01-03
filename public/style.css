@@ -694,7 +694,10 @@ form {
 
 .report-header {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 12px;
+  position: relative;
 }
 
 .report-user {
@@ -840,4 +843,30 @@ form {
 
 .challenge-owner-username:hover {
   color: #8b5cf6;
+}
+
+
+/* Menu Button (три точки) */
+.btn-menu {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+}
+
+.btn-menu:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-menu:active {
+  transform: scale(0.95);
 }

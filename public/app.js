@@ -1027,6 +1027,13 @@ window.showFeedReports = async function() {
                   ${donationsText}
                 </div>
               </div>
+              <button class="btn-menu" onclick="showReportMenu('${report._id}', '${report.username}')" title="Поделиться">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              </button>
             </div>
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
@@ -1138,6 +1145,16 @@ window.showUserProfile = async function(userId) {
         <div class="profile-avatar">${avatarHtml}</div>
         <h2 class="profile-username">@${user.username}</h2>
         ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+        <button class="btn btn-sm" onclick="shareProfile('${user.username}')" style="margin-top: 12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          Поделиться профилем
+        </button>
       </div>
       
       <div class="stats-compact" style="opacity: 1; margin: 20px 0;">
@@ -1202,4 +1219,67 @@ window.closeUserProfile = function() {
   if (tg) {
     tg.BackButton.hide();
   }
+}
+
+
+// Функции для шаринга
+const APP_URL = window.location.origin;
+
+// Поделиться профилем
+window.shareProfile = function(username) {
+  const url = `${APP_URL}/@${username}`;
+  copyToClipboard(url, `Ссылка на профиль @${username} скопирована!`);
+}
+
+// Поделиться челленджем
+window.showChallengeMenu = function(challengeId, title) {
+  const url = `${APP_URL}/challenge/${challengeId}`;
+  copyToClipboard(url, `Ссылка на челлендж "${title}" скопирована!`);
+}
+
+// Поделиться отчётом
+window.showReportMenu = function(reportId, username) {
+  const url = `${APP_URL}/report/${reportId}`;
+  copyToClipboard(url, `Ссылка на отчёт @${username} скопирована!`);
+}
+
+// Копировать в буфер обмена
+function copyToClipboard(text, successMessage) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(successMessage, 'success');
+      if (tg) {
+        tg.HapticFeedback.notificationOccurred('success');
+      }
+    }).catch(err => {
+      console.error('Ошибка копирования:', err);
+      fallbackCopyToClipboard(text, successMessage);
+    });
+  } else {
+    fallbackCopyToClipboard(text, successMessage);
+  }
+}
+
+// Fallback для старых браузеров
+function fallbackCopyToClipboard(text, successMessage) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showToast(successMessage, 'success');
+    if (tg) {
+      tg.HapticFeedback.notificationOccurred('success');
+    }
+  } catch (err) {
+    console.error('Fallback: Ошибка копирования', err);
+    showToast('Не удалось скопировать ссылку', 'error');
+  }
+  
+  document.body.removeChild(textArea);
 }
