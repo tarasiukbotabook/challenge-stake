@@ -1004,23 +1004,7 @@ window.showFeedReports = async function() {
   if (tg) tg.HapticFeedback.impactOccurred('light');
 }
 
-// Показать отчёты в ленте
-window.showFeedReports = function() {
-  const tabs = document.querySelectorAll('#feed-screen .tab-btn');
-  tabs.forEach(tab => tab.classList.remove('active'));
-  tabs[1].classList.add('active');
-  
-  const feedList = document.getElementById('feed-list');
-  feedList.innerHTML = `
-    <div class="empty-state">
-      <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">📊</div>
-      <div class="empty-text">Отчёты о прогрессе</div>
-      <p style="opacity: 0.6; margin-top: 8px;">Здесь будут появляться отчёты пользователей о выполнении челленджей</p>
-    </div>
-  `;
-  
-  if (tg) tg.HapticFeedback.impactOccurred('light');
-}
+// Эта функция удалена - используется async версия выше
 
 window.switchScreen = switchScreen;
 
