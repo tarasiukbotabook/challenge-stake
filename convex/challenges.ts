@@ -61,6 +61,8 @@ export const getAll = query({
         return {
           ...challenge,
           username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
         };
       })
     );
@@ -297,5 +299,61 @@ export const getAllReports = query({
     );
 
     return enriched;
+  },
+});
+
+
+export const toggleLike = mutation({
+  args: {
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    // Проверяем, есть ли уже лайк
+    const existingLike = await ctx.db
+      .query("likes")
+      .withIndex("by_user_and_progress", (q) => 
+        q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
+      )
+      .first();
+    
+    const progressUpdate = await ctx.db.get(args.progressUpdateId);
+    if (!progressUpdate) throw new Error("Отчёт не найден");
+    
+    if (existingLike) {
+      // Убираем лайк
+      await ctx.db.delete(existingLike._id);
+      await ctx.db.patch(args.progressUpdateId, {
+        likesCount: Math.max(0, (progressUpdate.likesCount || 0) - 1),
+      });
+      return { liked: false };
+    } else {
+      // Добавляем лайк
+      await ctx.db.insert("likes", {
+        progressUpdateId: args.progressUpdateId,
+        userId: args.userId,
+      });
+      await ctx.db.patch(args.progressUpdateId, {
+        likesCount: (progressUpdate.likesCount || 0) + 1,
+      });
+      return { liked: true };
+    }
+  },
+});
+
+export const checkLike = query({
+  args: {
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const like = await ctx.db
+      .query("likes")
+      .withIndex("by_user_and_progress", (q) => 
+        q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
+      )
+      .first();
+    
+    return { liked: !!like };
   },
 });

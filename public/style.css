@@ -608,6 +608,43 @@ body {
   transform: scale(0.95);
 }
 
+.btn-like {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-like:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-like.liked {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.btn-like.liked svg {
+  fill: #ef4444;
+}
+
+.btn-like:active {
+  transform: scale(0.95);
+}
+
+.like-count {
+  font-weight: 500;
+}
+
 .btn-block {
   width: 100%;
 }

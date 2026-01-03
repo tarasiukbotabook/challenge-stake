@@ -1095,6 +1095,12 @@ window.showFeedReports = async function() {
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
               <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn-like" onclick="toggleLike('${report._id}', this)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  <span class="like-count">${report.likesCount || 0}</span>
+                </button>
                 ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
                 ${donationsText}
               </div>
@@ -1214,22 +1220,32 @@ window.showUserProfile = async function(userId) {
       </div>
     ` : '';
     
+    // Кнопка настроек только для своего профиля
+    const settingsButton = isOwnProfile ? `
+      <button class="btn-icon" onclick="showProfileSettings()" title="Настройки профиля" style="position: absolute; top: 20px; right: 20px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
+        </svg>
+      </button>
+    ` : '';
+    
+    // Био и сайт
+    const bioSection = (stats.bio || stats.website) ? `
+      <div style="padding: 0 20px; margin-top: 12px; text-align: center;">
+        ${stats.bio ? `<p style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">${stats.bio}</p>` : ''}
+        ${stats.website ? `<a href="${stats.website}" target="_blank" style="font-size: 14px; color: #8b5cf6; text-decoration: none;">🔗 ${stats.website.replace(/^https?:\/\//, '')}</a>` : ''}
+      </div>
+    ` : '';
+    
     profileContent.innerHTML = `
-      <div class="profile-header">
+      <div class="profile-header" style="position: relative;">
+        ${settingsButton}
         <div class="profile-avatar">${avatarHtml}</div>
-        <h2 class="profile-username">@${user.username}</h2>
+        <h2 class="profile-username" onclick="shareProfile('${user.username}')" style="cursor: pointer;">@${user.username}</h2>
         ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+        ${bioSection}
         ${balanceSection}
-        <button class="btn btn-sm" onclick="shareProfile('${user.username}')" style="margin-top: 12px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-            <circle cx="18" cy="5" r="3"></circle>
-            <circle cx="6" cy="12" r="3"></circle>
-            <circle cx="18" cy="19" r="3"></circle>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
-          Поделиться профилем
-        </button>
       </div>
       
       <div class="stats-compact" style="opacity: 1; margin: 20px 16px;">
@@ -1314,6 +1330,40 @@ window.showMyProfile = function() {
     showUserProfile(currentUser.id);
   } else {
     showToast('Необходима авторизация', 'error');
+  }
+}
+
+// Лайкнуть отчёт
+window.toggleLike = async function(reportId, buttonElement) {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    const result = await client.mutation("challenges:toggleLike", {
+      progressUpdateId: reportId,
+      userId: currentUser.id
+    });
+    
+    // Обновляем UI
+    const likeCount = buttonElement.querySelector('.like-count');
+    const currentCount = parseInt(likeCount.textContent) || 0;
+    
+    if (result.liked) {
+      buttonElement.classList.add('liked');
+      likeCount.textContent = currentCount + 1;
+    } else {
+      buttonElement.classList.remove('liked');
+      likeCount.textContent = Math.max(0, currentCount - 1);
+    }
+    
+    if (tg) {
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка лайка:', error);
+    showToast('Ошибка', 'error');
   }
 }
 
@@ -1652,4 +1702,73 @@ function getCategoryName(category) {
     other: ' Другое'
   };
   return categories[category] || category;
+}
+
+// Показать настройки профиля
+window.showProfileSettings = async function() {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    // Загружаем текущие данные профиля
+    const stats = await client.query("users:getUserStats", { userId: currentUser.id });
+    
+    // Заполняем форму текущими значениями
+    document.getElementById('profile-bio').value = stats.bio || '';
+    document.getElementById('profile-website').value = stats.website || '';
+    
+    // Показываем модальное окно
+    document.getElementById('profile-settings-modal').classList.add('active');
+    
+    if (tg) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => closeModal('profile-settings-modal'));
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки настроек:', error);
+    showToast('Ошибка загрузки настроек', 'error');
+  }
+}
+
+// Обработка формы настроек профиля
+document.addEventListener('DOMContentLoaded', () => {
+  const settingsForm = document.getElementById('profile-settings-form');
+  if (settingsForm) {
+    settingsForm.addEventListener('submit', handleUpdateProfile);
+  }
+});
+
+// Обновить профиль
+async function handleUpdateProfile(e) {
+  e.preventDefault();
+  
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  const bio = document.getElementById('profile-bio').value.trim();
+  const website = document.getElementById('profile-website').value.trim();
+  
+  try {
+    await client.mutation("users:updateProfile", {
+      userId: currentUser.id,
+      bio: bio || undefined,
+      website: website || undefined
+    });
+    
+    showToast('Профиль обновлён!', 'success');
+    
+    closeModal('profile-settings-modal');
+    
+    // Обновляем отображение профиля
+    await showUserProfile(currentUser.id);
+    
+  } catch (error) {
+    console.error('Ошибка обновления профиля:', error);
+    showToast(error.message || 'Ошибка обновления профиля', 'error');
+  }
 }

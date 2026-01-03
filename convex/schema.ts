@@ -10,6 +10,8 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     photoUrl: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    website: v.optional(v.string()),
     balance: v.number(),
     premium: v.boolean(),
   }).index("by_email", ["email"])
@@ -46,7 +48,15 @@ export default defineSchema({
     content: v.string(),
     imageUrl: v.optional(v.string()),
     socialLink: v.optional(v.string()),
+    likesCount: v.optional(v.number()),
   }).index("by_challenge", ["challengeId"]),
+  
+  likes: defineTable({
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+  }).index("by_progress", ["progressUpdateId"])
+    .index("by_user", ["userId"])
+    .index("by_user_and_progress", ["userId", "progressUpdateId"]),
 
   controllers: defineTable({
     challengeId: v.id("challenges"),
