@@ -11,34 +11,47 @@ export const registerTelegram = mutation({
     photoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    console.log('=== registerTelegram called ===');
+    console.log('Args:', args);
+    
     const existing = await ctx.db
       .query("users")
       .withIndex("by_telegram", (q) => q.eq("telegramId", args.telegramId))
       .first();
 
     if (existing) {
+      console.log('User already exists:', existing._id);
       throw new Error("Пользователь уже зарегистрирован");
     }
 
-    const userId = await ctx.db.insert("users", {
-      telegramId: args.telegramId,
-      username: args.username,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      photoUrl: args.photoUrl,
-      balance: 1000, // Стартовый бонус
-      premium: false,
-    });
+    console.log('Creating new user...');
+    
+    try {
+      const userId = await ctx.db.insert("users", {
+        telegramId: args.telegramId,
+        username: args.username,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        photoUrl: args.photoUrl,
+        balance: 1000, // Стартовый бонус
+        premium: false,
+      });
 
-    return {
-      id: userId,
-      username: args.username,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      photoUrl: args.photoUrl,
-      balance: 1000,
-      premium: false,
-    };
+      console.log('User created successfully:', userId);
+
+      return {
+        id: userId,
+        username: args.username,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        photoUrl: args.photoUrl,
+        balance: 1000,
+        premium: false,
+      };
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   },
 });
 

@@ -38,15 +38,30 @@ function initTelegram() {
 
 // Автоматическая авторизация через Telegram
 async function autoLogin() {
-  if (!tg || !tg.initDataUnsafe?.user) {
-    console.log('No Telegram user data');
+  console.log('=== Starting autoLogin ===');
+  
+  if (!tg) {
+    console.log('Telegram WebApp not available');
+    return false;
+  }
+  
+  if (!tg.initDataUnsafe?.user) {
+    console.log('No Telegram user data in initDataUnsafe');
+    console.log('initDataUnsafe:', tg.initDataUnsafe);
     return false;
   }
 
   const telegramUser = tg.initDataUnsafe.user;
-  console.log('Telegram user:', telegramUser);
+  console.log('Telegram user data:', {
+    id: telegramUser.id,
+    first_name: telegramUser.first_name,
+    last_name: telegramUser.last_name,
+    username: telegramUser.username,
+    photo_url: telegramUser.photo_url,
+  });
 
   try {
+    console.log('Attempting login...');
     // Пытаемся войти
     const user = await client.query(api.users.loginTelegram, {
       telegramId: telegramUser.id.toString(),
@@ -57,17 +72,26 @@ async function autoLogin() {
     console.log('Login successful:', user);
     return true;
   } catch (error) {
-    console.log('User not found, registering...', error);
+    console.log('User not found, need to register');
+    console.log('Login error:', error.message);
     
     // Если пользователя нет - регистрируем
     try {
-      const result = await client.mutation(api.users.registerTelegram, {
+      const registrationData = {
         telegramId: telegramUser.id.toString(),
         username: telegramUser.username || `user${telegramUser.id}`,
         firstName: telegramUser.first_name || '',
         lastName: telegramUser.last_name || '',
-        photoUrl: telegramUser.photo_url || undefined,
-      });
+      };
+      
+      // Добавляем photoUrl только если он есть
+      if (telegramUser.photo_url) {
+        registrationData.photoUrl = telegramUser.photo_url;
+      }
+      
+      console.log('Attempting registration with data:', registrationData);
+      
+      const result = await client.mutation(api.users.registerTelegram, registrationData);
       
       currentUser = result;
       localStorage.setItem('user', JSON.stringify(currentUser));
@@ -81,9 +105,13 @@ async function autoLogin() {
       
       return true;
     } catch (regError) {
-      console.error('Registration failed:', regError);
+      console.error('=== Registration failed ===');
+      console.error('Error:', regError);
+      console.error('Error message:', regError.message);
+      console.error('Error stack:', regError.stack);
+      
       if (tg) {
-        tg.showAlert('Ошибка регистрации: ' + regError.message);
+        tg.showAlert('Ошибка регистрации: ' + (regError.message || 'Неизвестная ошибка') + '\n\nПроверьте консоль браузера для деталей.');
       }
       return false;
     }
