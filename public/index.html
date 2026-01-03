@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Challenge Stake</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="animated-bg"></div>
+  
+  <div id="app">
+    <!-- Main Screen -->
+    <div id="main-screen">
+      <div class="header">
+        <h1>🎯 Challenge Stake</h1>
+        <p id="user-greeting">Привет! Достигай целей публично</p>
+      </div>
+
+      <div class="container">
+        <!-- Balance Card -->
+        <div class="balance-card">
+          <div class="balance-label">Ваш баланс</div>
+          <div class="balance-amount" id="user-balance">0₽</div>
+          <div class="balance-actions">
+            <button class="btn btn-secondary btn-sm" onclick="showAddBalance()">
+              💳 Пополнить
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Всего</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-value" id="stat-completed">0</div>
+            <div class="stat-label">Выполнено</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-value" id="stat-failed">0</div>
+            <div class="stat-label">Провалено</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-active">0</div>
+            <div class="stat-label">Активных</div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showChallenges('my')">
+            Мои челленджи
+          </button>
+          <button class="tab-btn" onclick="showChallenges('all')">
+            Все челленджи
+          </button>
+        </div>
+
+        <!-- Challenges List -->
+        <div id="challenges-list"></div>
+      </div>
+
+      <!-- FAB Button -->
+      <div class="bottom-nav">
+        <button class="fab" onclick="showCreateChallenge()">
+          ➕
+        </button>
+      </div>
+    </div>
+
+    <!-- Create Challenge Modal -->
+    <div id="create-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Новый челлендж</h2>
+          <button class="close" onclick="closeModal('create-modal')">✕</button>
+        </div>
+        
+        <form id="create-challenge-form">
+          <div class="form-group">
+            <label class="form-label">Название цели</label>
+            <input type="text" class="form-input" id="challenge-title" placeholder="Пробежать 50км за месяц" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Описание</label>
+            <textarea class="form-textarea" id="challenge-description" placeholder="Что именно нужно сделать?"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Категория</label>
+            <select class="form-select" id="challenge-category">
+              <option value="health">🏃 Здоровье и спорт</option>
+              <option value="learning">📚 Обучение</option>
+              <option value="business">💼 Бизнес</option>
+              <option value="habits">🎯 Привычки</option>
+              <option value="creative">🎨 Творчество</option>
+              <option value="other">📌 Другое</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Сумма ставки (₽)</label>
+            <input type="number" class="form-input" id="challenge-stake" placeholder="1000" min="100" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Дедлайн</label>
+            <input type="date" class="form-input" id="challenge-deadline" required>
+          </div>
+
+          <div class="info-box">
+            💡 Если не выполните цель до дедлайна, деньги уйдут на благотворительность
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Создать и заморозить ставку
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Balance Modal -->
+    <div id="balance-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Пополнить баланс</h2>
+          <button class="close" onclick="closeModal('balance-modal')">✕</button>
+        </div>
+        
+        <form id="add-balance-form">
+          <div class="form-group">
+            <label class="form-label">Сумма (₽)</label>
+            <input type="number" class="form-input" id="balance-amount" placeholder="1000" min="100" required>
+          </div>
+
+          <div class="info-box">
+            💳 В реальной версии здесь будет интеграция с платежной системой
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Пополнить
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progress-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Добавить прогресс</h2>
+          <button class="close" onclick="closeModal('progress-modal')">✕</button>
+        </div>
+        
+        <form id="add-progress-form">
+          <div class="form-group">
+            <label class="form-label">Опишите свой прогресс</label>
+            <textarea class="form-textarea" id="progress-content" placeholder="Сегодня пробежал 5км!" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ссылка на пост (опционально)</label>
+            <input type="url" class="form-input" id="progress-social" placeholder="https://t.me/...">
+          </div>
+
+          <div class="info-box">
+            📱 Поделитесь прогрессом в Telegram для виральности!
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">
+            Добавить прогресс
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
