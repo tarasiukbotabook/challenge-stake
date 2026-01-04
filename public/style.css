@@ -419,6 +419,12 @@ body {
   font-size: 11px;
 }
 
+.challenge-timer {
+  color: var(--accent-lime);
+  font-weight: 500;
+  opacity: 1 !important;
+}
+
 .challenge-stake {
   display: flex;
   align-items: center;

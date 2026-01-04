@@ -464,6 +464,7 @@ export const voteReport = mutation({
     progressUpdateId: v.id("progressUpdates"),
     userId: v.id("users"),
     voteType: v.string(), // 'verify' or 'fake'
+    reason: v.optional(v.string()), // Причина для 'fake'
   },
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.progressUpdateId);
@@ -498,6 +499,7 @@ export const voteReport = mutation({
         // Меняем тип голоса
         await ctx.db.patch(existingVote._id, {
           voteType: args.voteType,
+          reason: args.reason,
         });
         
         // Обновляем счётчики
@@ -521,6 +523,7 @@ export const voteReport = mutation({
         progressUpdateId: args.progressUpdateId,
         userId: args.userId,
         voteType: args.voteType,
+        reason: args.reason,
       });
       
       // Увеличиваем счётчик

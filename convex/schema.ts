@@ -59,6 +59,7 @@ export default defineSchema({
     progressUpdateId: v.id("progressUpdates"),
     userId: v.id("users"),
     voteType: v.string(), // 'verify' or 'fake'
+    reason: v.optional(v.string()), // Причина для голоса 'fake'
   }).index("by_report", ["progressUpdateId"])
     .index("by_user", ["userId"])
     .index("by_user_and_report", ["userId", "progressUpdateId"]),

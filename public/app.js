@@ -412,6 +412,34 @@ function animateValue(id, start, end, duration) {
   }, 16);
 }
 
+// Форматировать оставшееся время
+function formatTimeRemaining(deadline) {
+  const now = new Date();
+  const end = new Date(deadline);
+  const diff = end - now;
+  
+  if (diff <= 0) {
+    return '<span style="color: #ef4444;">Завершён</span>';
+  }
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 30) {
+    const months = Math.floor(days / 30);
+    const remainingDays = days % 30;
+    return `${months} мес${remainingDays > 0 ? ` ${remainingDays} дн` : ''}`;
+  } else if (days > 0) {
+    return `${days} дн${hours > 0 ? ` ${hours} ч` : ''}`;
+  } else if (hours > 0) {
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours} ч${minutes > 0 ? ` ${minutes} мин` : ''}`;
+  } else {
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes} мин`;
+  }
+}
+
 // Загрузка челленджей
 async function loadChallenges(type) {
   if (!currentUser) return;
@@ -478,6 +506,7 @@ function displayChallenges(challenges, isMine, container) {
     const deadline = new Date(challenge.deadline);
     const donationsAmount = challenge.donationsAmount || 0;
     const totalAmount = challenge.stakeAmount + donationsAmount;
+    const timeRemaining = formatTimeRemaining(challenge.deadline);
 
     const statusBadge = {
       active: '<span class="challenge-badge badge-active">Активен</span>',
@@ -501,6 +530,7 @@ function displayChallenges(challenges, isMine, container) {
               <span>${deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
               <span>•</span>
               <span>${statusBadge[challenge.status]}</span>
+              ${challenge.status === 'active' ? `<span>•</span><span class="challenge-timer">${timeRemaining}</span>` : ''}
             </div>
           </div>
           <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
@@ -1377,11 +1407,100 @@ window.toggleReportVote = async function(reportId, voteType, buttonElement) {
     return;
   }
   
+  // Если голос "fake", показываем модальное окно с причиной
+  if (voteType === 'fake') {
+    showFakeReasonModal(reportId, buttonElement);
+    return;
+  }
+  
+  // Для "verify" голосуем сразу
+  await submitReportVote(reportId, voteType, buttonElement, null);
+}
+
+// Показать модальное окно с причиной для "Не верю"
+window.showFakeReasonModal = function(reportId, buttonElement) {
+  let modal = document.getElementById('fake-reason-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'fake-reason-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Почему не верите?</h2>
+          <button class="close" onclick="closeModal('fake-reason-modal')">✕</button>
+        </div>
+        <form id="fake-reason-form" style="padding: 20px;">
+          <div class="form-group">
+            <label class="form-label">Укажите причину:</label>
+            <select id="fake-reason-select" class="form-select" required>
+              <option value="">Выберите причину</option>
+              <option value="Фото из интернета">Фото из интернета</option>
+              <option value="Старое фото">Старое фото</option>
+              <option value="Не соответствует задаче">Не соответствует задаче</option>
+              <option value="Подозрительный контент">Подозрительный контент</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </div>
+          <div class="form-group" id="custom-reason-group" style="display: none;">
+            <label class="form-label">Опишите подробнее:</label>
+            <textarea id="custom-reason-text" class="form-textarea" rows="3" maxlength="200"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Отправить</button>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Обработчик для показа поля "Другое"
+    document.getElementById('fake-reason-select').addEventListener('change', function(e) {
+      const customGroup = document.getElementById('custom-reason-group');
+      if (e.target.value === 'Другое') {
+        customGroup.style.display = 'block';
+        document.getElementById('custom-reason-text').required = true;
+      } else {
+        customGroup.style.display = 'none';
+        document.getElementById('custom-reason-text').required = false;
+      }
+    });
+    
+    // Обработчик отправки формы
+    document.getElementById('fake-reason-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const select = document.getElementById('fake-reason-select');
+      let reason = select.value;
+      
+      if (reason === 'Другое') {
+        const customText = document.getElementById('custom-reason-text').value.trim();
+        reason = customText || 'Другое';
+      }
+      
+      closeModal('fake-reason-modal');
+      await submitReportVote(reportId, 'fake', buttonElement, reason);
+    });
+  }
+  
+  // Сбрасываем форму
+  document.getElementById('fake-reason-form').reset();
+  document.getElementById('custom-reason-group').style.display = 'none';
+  
+  modal.classList.add('active');
+  
+  if (tg) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => closeModal('fake-reason-modal'));
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
+// Отправить голос за отчёт
+async function submitReportVote(reportId, voteType, buttonElement, reason) {
   try {
     const result = await client.mutation("challenges:voteReport", {
       progressUpdateId: reportId,
       userId: currentUser.id,
-      voteType: voteType
+      voteType: voteType,
+      reason: reason
     });
     
     // Обновляем UI
@@ -1428,10 +1547,13 @@ window.toggleReportVote = async function(reportId, voteType, buttonElement) {
           verifyCount.textContent = Math.max(0, parseInt(verifyCount.textContent) - 1);
         }
       }
+      
+      showToast('Голос учтён', 'success');
     } else {
       // Голос убран
       buttonElement.classList.remove('voted');
       voteCount.textContent = Math.max(0, currentCount - 1);
+      showToast('Голос отменён', 'info');
     }
     
     if (tg) {
