@@ -1496,18 +1496,20 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
   console.log('currentUser.id:', currentUser?.id);
   
   try {
-    const mutationArgs: any = {
+    // Формируем аргументы для mutation
+    const mutationArgs = {
       progressUpdateId: reportId,
       userId: currentUser.id,
       voteType: voteType,
     };
     
-    // Добавляем reason только если он есть
-    if (reason !== undefined && reason !== null) {
+    // Добавляем reason только если он действительно есть (не undefined и не null и не пустая строка)
+    if (reason && typeof reason === 'string' && reason.trim().length > 0) {
       mutationArgs.reason = reason;
     }
     
     console.log('mutation args:', mutationArgs);
+    console.log('mutation args keys:', Object.keys(mutationArgs));
     
     const result = await client.mutation("challenges:voteReport", mutationArgs);
     
