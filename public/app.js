@@ -1106,11 +1106,11 @@ window.showFeedReports = async function() {
         // Проверяем, это не наш отчёт
         const canDonate = currentUser && report.userId !== currentUser.id;
         
-        // Сумма донатов - всегда показываем, делаем кликабельной если есть донаты
+        // Сумма донатов - компактный вид
         const donationsAmount = report.donationsAmount || 0;
         const donationsText = donationsAmount > 0 
-          ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}', '${report.userId}')">💰 Собрано: $${donationsAmount}</div>`
-          : `<div style="font-size: 12px; opacity: 0.6;">Собрано: $0</div>`;
+          ? `<div style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--accent-green);" onclick="showReportDonations('${report._id}', '${report.userId}')" title="Посмотреть донатеров">$${donationsAmount}</div>`
+          : '';
         
         return `
           <div class="report-card" data-report-id="${report._id}">
@@ -1134,7 +1134,7 @@ window.showFeedReports = async function() {
             <div class="report-content">${report.content}</div>
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-              <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждаю">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -1151,9 +1151,11 @@ window.showFeedReports = async function() {
                   <span class="vote-count">${report.fakeVotes || 0}</span>
                 </button>
                 ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
-                ${donationsText}
               </div>
-              ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
+              <div style="display: flex; align-items: center; gap: 8px;">
+                ${donationsText}
+                ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
+              </div>
             </div>
           </div>
         `;
@@ -1510,28 +1512,30 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
     
     // Находим обе кнопки голосования для этого отчёта
     const reportCard = buttonElement.closest('.report-card');
-    const verifyBtn = reportCard.querySelector('.btn-vote-verify');
-    const fakeBtn = reportCard.querySelector('.btn-vote-fake');
-    const verifyCount = verifyBtn.querySelector('.vote-count');
-    const fakeCount = fakeBtn.querySelector('.vote-count');
     
-    if (result.voted) {
-      // Голос добавлен или изменён
-      if (result.voteType === 'verify') {
-        verifyBtn.classList.add('voted');
-        fakeBtn.classList.remove('voted');
-      } else {
-        fakeBtn.classList.add('voted');
-        verifyBtn.classList.remove('voted');
-      }
+    if (reportCard) {
+      const verifyBtn = reportCard.querySelector('.btn-vote-verify');
+      const fakeBtn = reportCard.querySelector('.btn-vote-fake');
       
-      showToast('Голос учтён', 'success');
-    } else {
-      // Голос убран
-      verifyBtn.classList.remove('voted');
-      fakeBtn.classList.remove('voted');
-      showToast('Голос отменён', 'info');
+      if (verifyBtn && fakeBtn) {
+        if (result.voted) {
+          // Голос добавлен или изменён
+          if (result.voteType === 'verify') {
+            verifyBtn.classList.add('voted');
+            fakeBtn.classList.remove('voted');
+          } else {
+            fakeBtn.classList.add('voted');
+            verifyBtn.classList.remove('voted');
+          }
+        } else {
+          // Голос убран
+          verifyBtn.classList.remove('voted');
+          fakeBtn.classList.remove('voted');
+        }
+      }
     }
+    
+    showToast(result.voted ? 'Голос учтён' : 'Голос отменён', result.voted ? 'success' : 'info');
     
     // Перезагружаем отчёты чтобы получить актуальные счётчики
     const feedScreen = document.getElementById('feed-screen');
@@ -1544,7 +1548,6 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
     if (profileScreen && profileScreen.classList.contains('active')) {
       const activeTab = document.querySelector('#user-profile-screen .tab-btn.active');
       if (activeTab && activeTab.textContent.includes('Отчёты')) {
-        // Получаем userId из атрибута или из currentUser
         const userId = currentUser.id;
         await showProfileTab(userId, 'reports');
       }
@@ -1555,7 +1558,7 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
     }
   } catch (error) {
     console.error('Ошибка голосования:', error);
-    showToast('Ошибка', 'error');
+    showToast(error.message || 'Ошибка голосования', 'error');
   }
 }
 
@@ -2180,8 +2183,8 @@ window.showProfileTab = async function(userId, tab) {
           const canDonate = currentUser && report.userId !== currentUser.id;
           const donationsAmount = report.donationsAmount || 0;
           const donationsText = donationsAmount > 0 
-            ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}', '${report.userId}')">💰 Собрано: $${donationsAmount}</div>`
-            : `<div style="font-size: 12px; opacity: 0.6;">Собрано: $0</div>`;
+            ? `<div style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--accent-green);" onclick="showReportDonations('${report._id}', '${report.userId}')" title="Посмотреть донатеров">$${donationsAmount}</div>`
+            : '';
           
           return `
             <div class="report-card" data-report-id="${report._id}">
@@ -2205,7 +2208,7 @@ window.showProfileTab = async function(userId, tab) {
               <div class="report-content">${report.content}</div>
               ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                   <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждаю">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -2222,9 +2225,11 @@ window.showProfileTab = async function(userId, tab) {
                     <span class="vote-count">${report.fakeVotes || 0}</span>
                   </button>
                   ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
-                  ${donationsText}
                 </div>
-                ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  ${donationsText}
+                  ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
+                </div>
               </div>
             </div>
           `;

@@ -530,8 +530,8 @@
               <th>Челлендж</th>
               <th>Контент</th>
               <th>Фото</th>
-              <th>✓ Голоса</th>
-              <th>✗ Голоса</th>
+              <th style="text-align: center;">✓</th>
+              <th style="text-align: center;">✗</th>
               <th>Статус</th>
               <th>Дата</th>
               <th>Действия</th>
@@ -552,9 +552,9 @@
               }[report.verificationStatus] || '<span class="badge badge-pending">На проверке</span>';
               
               const actions = `
-                <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')">✓ Подтвердить</button>
-                <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')">✗ Fake</button>
-                ${report.verificationStatus !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${report._id}', 'pending')" style="background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-top: 4px; width: 100%;">↻ Вернуть на проверку</button>` : ''}
+                <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')" title="Подтвердить">✓</button>
+                <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')" title="Отклонить">✗</button>
+                ${report.verificationStatus !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${report._id}', 'pending')" style="background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-top: 4px; width: 100%;" title="Вернуть на проверку">↻</button>` : ''}
               `;
               
               return `
@@ -562,9 +562,9 @@
                   <td>${avatar} @${report.username}</td>
                   <td>${report.challengeTitle}</td>
                   <td><div class="report-content">${report.content}</div></td>
-                  <td>${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : '-'}</td>
-                  <td style="color: var(--accent-green); font-weight: 600;">${report.verifyVotes || 0}</td>
-                  <td style="color: #ef4444; font-weight: 600;">${report.fakeVotes || 0}</td>
+                  <td>${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image" onclick="showImageModal('${report.imageUrl}')" style="cursor: pointer;" title="Нажмите для увеличения">` : '-'}</td>
+                  <td style="color: var(--accent-green); font-weight: 600; text-align: center;">${report.verifyVotes || 0}</td>
+                  <td style="color: #ef4444; font-weight: 600; text-align: center;">${report.fakeVotes || 0}</td>
                   <td>${statusBadge}</td>
                   <td>${date}</td>
                   <td>${actions}</td>
@@ -579,13 +579,43 @@
     async function updateStatus(reportId, status) {
       try {
         await client.mutation("admin:updateReportStatus", { reportId, status });
-        alert(`Статус обновлён: ${status === 'verified' ? 'Подтверждён' : 'Fake'}`);
+        alert(`Статус обновлён: ${status === 'verified' ? 'Подтверждён' : status === 'fake' ? 'Fake' : 'На проверке'}`);
         loadReports();
         loadStats();
       } catch (error) {
         console.error('Error updating status:', error);
         alert('Ошибка обновления статуса');
       }
+    }
+
+    function showImageModal(imageUrl) {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        cursor: pointer;
+      `;
+      
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.style.cssText = `
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+      `;
+      
+      modal.appendChild(img);
+      modal.onclick = () => modal.remove();
+      document.body.appendChild(modal);
     }
 
     // Загрузка данных при старте
