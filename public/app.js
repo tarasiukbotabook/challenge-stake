@@ -1166,12 +1166,14 @@ window.showUserProfile = async function(userId) {
   
   const isOwnProfile = currentUser && userId === currentUser.id;
   
-  // Скрываем нижнее меню
-  document.querySelector('.bottom-nav').style.display = 'none';
-  
   // Показываем экран профиля
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('user-profile-screen').classList.add('active');
+  
+  // Обновляем активную кнопку в навигации
+  const navBtns = document.querySelectorAll('.nav-btn:not(.nav-btn-add)');
+  navBtns.forEach(btn => btn.classList.remove('active'));
+  navBtns[1]?.classList.add('active'); // Кнопка профиля
   
   // Показываем загрузку
   const profileContent = document.getElementById('profile-content');
@@ -1309,19 +1311,7 @@ window.showUserProfile = async function(userId) {
   }
   
   if (tg) {
-    tg.BackButton.show();
-    tg.BackButton.onClick(closeUserProfile);
     tg.HapticFeedback.impactOccurred('light');
-  }
-}
-
-// Закрыть профиль пользователя
-window.closeUserProfile = function() {
-  document.querySelector('.bottom-nav').style.display = 'flex';
-  switchScreen('feed');
-  
-  if (tg) {
-    tg.BackButton.hide();
   }
 }
 
