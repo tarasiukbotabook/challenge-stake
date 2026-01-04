@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Platform,
   ActivityIndicator,
   Animated,
@@ -27,43 +26,52 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorDetails, setErrorDetails] = useState<{ currentBalance?: number; requiredAmount?: number } | null>(null);
   const [toastAnim] = useState(new Animated.Value(-100));
+  const [errorToastAnim] = useState(new Animated.Value(-100));
 
   const createChallenge = useMutation(api.challenges.create);
 
   const handleCreate = async () => {
     if (!userId) {
-      Alert.alert('Ошибка', 'Не удалось определить пользователя');
+      setErrorMessage('Не удалось определить пользователя');
+      showErrorToastNotification();
       return;
     }
 
     if (!title || !description || !stakeAmount) {
-      Alert.alert('Ошибка', 'Заполните все обязательные поля');
+      setErrorMessage('Заполните все обязательные поля');
+      showErrorToastNotification();
       return;
     }
 
     // Проверка минимальной длины названия
     if (title.trim().length < 10) {
-      Alert.alert('Ошибка', 'Название цели должно содержать минимум 10 символов');
+      setErrorMessage('Название цели должно содержать минимум 10 символов');
+      showErrorToastNotification();
       return;
     }
 
     // Проверка минимальной длины описания
     if (description.trim().length < 20) {
-      Alert.alert('Ошибка', 'Описание цели должно содержать минимум 20 символов');
+      setErrorMessage('Описание цели должно содержать минимум 20 символов');
+      showErrorToastNotification();
       return;
     }
 
     const amount = parseFloat(stakeAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Ошибка', 'Введите корректную сумму ставки');
+      setErrorMessage('Введите корректную сумму ставки');
+      showErrorToastNotification();
       return;
     }
 
     setIsCreating(true);
 
     try {
-      await createChallenge({
+      const result = await createChallenge({
         userId: userId,
         title: title.trim(),
         description: description.trim(),
@@ -71,6 +79,19 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
         deadline: deadline.toISOString(),
         category: category,
       });
+
+      // Проверяем результат
+      if (!result.success) {
+        if (result.error === "Недостаточно средств на балансе") {
+          setErrorMessage(`На балансе $${result.currentBalance}. Нужно $${result.requiredAmount}`);
+          setErrorDetails({ currentBalance: result.currentBalance, requiredAmount: result.requiredAmount });
+        } else {
+          setErrorMessage(result.error || 'Не удалось создать цель');
+          setErrorDetails(null);
+        }
+        showErrorToastNotification();
+        return;
+      }
 
       // Показываем toast уведомление
       setShowSuccessToast(true);
@@ -93,10 +114,33 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
         navigation.goBack();
       });
     } catch (error: any) {
-      Alert.alert('Ошибка', error.message || 'Не удалось создать цель');
+      setErrorMessage(error.message || 'Не удалось создать цель');
+      setErrorDetails(null);
+      showErrorToastNotification();
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const showErrorToastNotification = () => {
+    setShowErrorToast(true);
+    
+    Animated.sequence([
+      Animated.timing(errorToastAnim, {
+        toValue: 60,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(errorToastAnim, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowErrorToast(false);
+      setErrorDetails(null);
+    });
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -247,6 +291,31 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
         <View style={styles.successToast}>
           <Text style={styles.successIcon}>🎯</Text>
           <Text style={styles.successText}>Цель создана!</Text>
+        </View>
+      </Animated.View>
+    )}
+    
+    {/* Error Toast Notification */}
+    {showErrorToast && (
+      <Animated.View 
+        style={[
+          styles.errorOverlay,
+          { transform: [{ translateY: errorToastAnim }] }
+        ]}
+      >
+        <View style={styles.errorToast}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+          {errorDetails && (
+            <TouchableOpacity 
+              style={styles.topUpButton}
+              onPress={() => {
+                setShowErrorToast(false);
+                navigation.navigate('AddBalance', { userId });
+              }}
+            >
+              <Text style={styles.topUpButtonText}>Пополнить баланс</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Animated.View>
     )}
@@ -409,5 +478,48 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
     color: '#000',
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  errorToast: {
+    backgroundColor: '#ff6b35',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    marginHorizontal: spacing.md,
+    minWidth: 280,
+  },
+  errorText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  topUpButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  topUpButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    color: '#fff',
   },
 });

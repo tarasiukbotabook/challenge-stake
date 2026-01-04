@@ -110,17 +110,17 @@ const FeedScreen = forwardRef(({ userId, navigation }: any, ref) => {
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
+      {/* Top Bar - Фиксированный */}
       <TopBar 
         balance={balance} 
-        rating={rating}
         onBalancePress={() => navigation.navigate('AddBalance', { userId })}
         onNotificationsPress={() => navigation.navigate('Notifications', { userId })}
         unreadCount={0}
       />
       
-      {/* Tabs */}
-      <View style={styles.tabs}>
+      <ScrollView ref={scrollViewRef} style={styles.contentWrapper}>
+        {/* Tabs */}
+        <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tabBtn, activeTab === 'reports' && styles.tabBtnActive]}
           onPress={() => setActiveTab('reports')}
@@ -140,7 +140,7 @@ const FeedScreen = forwardRef(({ userId, navigation }: any, ref) => {
       </View>
 
       {/* Feed List */}
-      <ScrollView ref={scrollViewRef} style={styles.feedList}>
+      <View style={styles.feedList}>
         {activeTab === 'reports' ? (
           reports === undefined ? (
             <View style={styles.emptyState}>
@@ -188,6 +188,7 @@ const FeedScreen = forwardRef(({ userId, navigation }: any, ref) => {
             />
           ))
         )}
+      </View>
       </ScrollView>
       
       {/* Donate Modal */}
@@ -282,7 +283,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgPrimary,
-    paddingTop: 50, // Отступ сверху для безопасной зоны
+  },
+  contentWrapper: {
+    flex: 1,
+    marginTop: 100, // Отступ для фиксированного TopBar
   },
   tabs: {
     flexDirection: 'row',
@@ -308,7 +312,6 @@ const styles = StyleSheet.create({
     color: colors.lime,
   },
   feedList: {
-    flex: 1,
     padding: spacing.sm,
   },
   emptyState: {

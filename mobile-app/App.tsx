@@ -33,6 +33,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const ProfileStack = createNativeStackNavigator();
 const FeedStack = createNativeStackNavigator();
+const AddReportStack = createNativeStackNavigator();
 
 // Feed Stack Navigator (для навигации внутри ленты)
 function FeedStackScreen({ userId, scrollToTop }: { userId: string; scrollToTop?: boolean }) {
@@ -94,6 +95,20 @@ function ProfileStackScreen({ userId, onLogout }: { userId: string; onLogout: ()
         {(props) => <AddBalanceScreen {...props} />}
       </ProfileStack.Screen>
     </ProfileStack.Navigator>
+  );
+}
+
+// AddReport Stack Navigator (для навигации из экрана добавления отчёта)
+function AddReportStackScreen({ userId }: { userId: string }) {
+  return (
+    <AddReportStack.Navigator screenOptions={{ headerShown: false }}>
+      <AddReportStack.Screen name="AddReportMain">
+        {(props) => <AddReportScreen {...props} userId={userId} />}
+      </AddReportStack.Screen>
+      <AddReportStack.Screen name="CreateChallenge">
+        {(props) => <CreateChallengeScreen {...props} userId={userId} />}
+      </AddReportStack.Screen>
+    </AddReportStack.Navigator>
   );
 }
 
@@ -162,7 +177,7 @@ function MainTabs({ userId, onLogout }: { userId: string; onLogout: () => void }
           ),
         }}
       >
-        {(props) => <AddReportScreen {...props} userId={userId} />}
+        {() => <AddReportStackScreen userId={userId} />}
       </Tab.Screen>
       <Tab.Screen
         name="Profile"

@@ -125,87 +125,102 @@ export default function AddReportScreen({ navigation, userId }: any) {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Выберите цель</Text>
-            {userChallenges === undefined ? (
-              <ActivityIndicator size="small" color={colors.lime} />
-            ) : userChallenges.length === 0 ? (
-              <Text style={styles.hint}>
-                У вас пока нет активных челленджей. Создайте челлендж в профиле!
+          {userChallenges === undefined ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.lime} />
+              <Text style={styles.loadingText}>Загрузка...</Text>
+            </View>
+          ) : userChallenges.length === 0 ? (
+            <View style={styles.emptyStateContainer}>
+              <Text style={styles.emptyStateIcon}>🎯</Text>
+              <Text style={styles.emptyStateTitle}>У вас пока нет активных целей</Text>
+              <Text style={styles.emptyStateDescription}>
+                Создайте цель, чтобы начать публиковать отчёты о своём прогрессе
               </Text>
-            ) : (
-              <Dropdown
-                style={styles.dropdown}
-                containerStyle={styles.dropdownContainer}
-                placeholderStyle={styles.dropdownPlaceholder}
-                selectedTextStyle={styles.dropdownSelectedText}
-                itemTextStyle={styles.dropdownItemText}
-                iconStyle={styles.dropdownIcon}
-                data={dropdownData}
-                maxHeight={300}
-                labelField="label"
-                valueField="value"
-                placeholder="Выберите цель..."
-                value={challengeId}
-                onChange={item => setChallengeId(item.value)}
-                activeColor="rgba(190, 242, 100, 0.1)"
-              />
-            )}
-          </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Текст отчёта</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={content}
-            onChangeText={setContent}
-            placeholder="Сегодня пробежал 5км! Чувствую себя отлично 💪"
-            placeholderTextColor={colors.textMuted}
-            multiline
-            numberOfLines={5}
-            textAlignVertical="top"
-            keyboardAppearance="dark"
-            returnKeyType="default"
-            blurOnSubmit={false}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Фото (опционально)</Text>
-          {imageUri ? (
-            <View style={styles.imagePreviewContainer}>
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
               <TouchableOpacity 
-                style={styles.removeImageButton}
-                onPress={removeImage}
+                style={styles.createChallengeButton}
+                onPress={() => navigation.navigate('CreateChallenge', { userId })}
               >
-                <Text style={styles.removeImageText}>✕</Text>
+                <Text style={styles.createChallengeButtonText}>Создать цель</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-              <Text style={styles.photoButtonText}>📷 Добавить фото</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+            <>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Выберите цель</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  containerStyle={styles.dropdownContainer}
+                  placeholderStyle={styles.dropdownPlaceholder}
+                  selectedTextStyle={styles.dropdownSelectedText}
+                  itemTextStyle={styles.dropdownItemText}
+                  iconStyle={styles.dropdownIcon}
+                  data={dropdownData}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Выберите цель..."
+                  value={challengeId}
+                  onChange={item => setChallengeId(item.value)}
+                  activeColor="rgba(190, 242, 100, 0.1)"
+                />
+              </View>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            Отчёт будет виден всем пользователям в ленте
-          </Text>
-        </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Текст отчёта</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={content}
+                  onChangeText={setContent}
+                  placeholder="Сегодня пробежал 5км! Чувствую себя отлично 💪"
+                  placeholderTextColor={colors.textMuted}
+                  multiline
+                  numberOfLines={5}
+                  textAlignVertical="top"
+                  keyboardAppearance="dark"
+                  returnKeyType="default"
+                  blurOnSubmit={false}
+                />
+              </View>
 
-        <TouchableOpacity 
-          style={[styles.button, isSubmitting && styles.buttonDisabled]} 
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color={colors.textPrimary} />
-          ) : (
-            <Text style={styles.buttonText}>Опубликовать отчёт</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Фото (опционально)</Text>
+                {imageUri ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={removeImage}
+                    >
+                      <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                    <Text style={styles.photoButtonText}>📷 Добавить фото</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>
+                  Отчёт будет виден всем пользователям в ленте
+                </Text>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.button, isSubmitting && styles.buttonDisabled]} 
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color={colors.textPrimary} />
+                ) : (
+                  <Text style={styles.buttonText}>Опубликовать отчёт</Text>
+                )}
+              </TouchableOpacity>
+            </>
           )}
-        </TouchableOpacity>
       </View>
     </ScrollView>
     
@@ -315,6 +330,52 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textMuted,
     marginTop: spacing.xs,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl * 3,
+  },
+  loadingText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl * 2,
+    paddingHorizontal: spacing.lg,
+  },
+  emptyStateIcon: {
+    fontSize: 80,
+    marginBottom: spacing.lg,
+    opacity: 0.6,
+  },
+  emptyStateTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  emptyStateDescription: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: 22,
+  },
+  createChallengeButton: {
+    backgroundColor: colors.lime,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+  },
+  createChallengeButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
   },
   photoButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',

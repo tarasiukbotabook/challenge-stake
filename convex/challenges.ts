@@ -14,14 +14,21 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error("Пользователь не найден");
+    if (!user) {
+      return { success: false, error: "Пользователь не найден" };
+    }
 
     if (args.stakeAmount < 1) {
-      throw new Error("Минимальная ставка - $1");
+      return { success: false, error: "Минимальная ставка - $1" };
     }
 
     if (user.balance < args.stakeAmount) {
-      throw new Error("Недостаточно средств на балансе");
+      return { 
+        success: false, 
+        error: "Недостаточно средств на балансе",
+        currentBalance: user.balance,
+        requiredAmount: args.stakeAmount
+      };
     }
 
     const challengeId = await ctx.db.insert("challenges", {
@@ -66,7 +73,7 @@ export const create = mutation({
       isRead: false,
     });
 
-    return { challengeId };
+    return { success: true, challengeId };
   },
 });
 

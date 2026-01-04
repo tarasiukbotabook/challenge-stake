@@ -1,24 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, fontSize, fontWeight } from '../styles/theme';
-import { StarIcon, BellIcon } from './Icons';
+import { BellIcon } from './Icons';
 
 interface TopBarProps {
   balance: number;
-  rating: number;
   onBalancePress?: () => void;
   onNotificationsPress?: () => void;
   unreadCount?: number;
 }
 
-export default function TopBar({ balance, rating, onBalancePress, onNotificationsPress, unreadCount = 0 }: TopBarProps) {
+export default function TopBar({ balance, onBalancePress, onNotificationsPress, unreadCount = 0 }: TopBarProps) {
   return (
     <View style={styles.container}>
-      {/* Рейтинг */}
-      <View style={styles.ratingContainer}>
-        <StarIcon width={16} height={16} color={colors.gold} />
-        <Text style={styles.ratingText}>{rating}</Text>
-      </View>
+      {/* Пустое место слева для симметрии */}
+      <View style={styles.leftSpacer} />
+
+      {/* Логотип по центру */}
+      <Text style={styles.logo}>POFACTU</Text>
 
       <View style={styles.rightSection}>
         {/* Баланс */}
@@ -27,7 +26,6 @@ export default function TopBar({ balance, rating, onBalancePress, onNotification
           onPress={onBalancePress}
           activeOpacity={0.7}
         >
-          <Text style={styles.balanceLabel}>Баланс:</Text>
           <Text style={styles.balanceValue}>${balance}</Text>
         </TouchableOpacity>
 
@@ -51,30 +49,29 @@ export default function TopBar({ balance, rating, onBalancePress, onNotification
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: 50,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.bgSecondary,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    zIndex: 100,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
+  leftSpacer: {
+    width: 80,
   },
-  ratingText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.gold,
+  logo: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.lime,
+    letterSpacing: 1,
   },
   rightSection: {
     flexDirection: 'row',
@@ -91,10 +88,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.2)',
-  },
-  balanceLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
   },
   balanceValue: {
     fontSize: fontSize.sm,

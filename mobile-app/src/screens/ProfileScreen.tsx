@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIn
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../styles/theme';
-import { SettingsIcon } from '../components/Icons';
+import { SettingsIcon, StarIcon } from '../components/Icons';
 import TopBar from '../components/TopBar';
 import ReportCard from '../components/ReportCard';
 import ChallengeCard from '../components/ChallengeCard';
@@ -139,16 +139,15 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-      {/* Top Bar */}
+      {/* Top Bar - Фиксированный */}
       <TopBar 
         balance={mockStats.balance} 
-        rating={mockUser.rating}
         onBalancePress={() => navigation.navigate('AddBalance', { userId })}
         onNotificationsPress={() => navigation.navigate('Notifications', { userId })}
         unreadCount={0}
       />
       
+      <ScrollView style={styles.scrollContent}>
       {/* Profile Header - Компактный */}
       <View style={styles.profileHeader}>
         <TouchableOpacity 
@@ -163,6 +162,11 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
           <View style={styles.avatarContainer}>
             <View style={styles.profileAvatar}>
               {renderAvatar(mockUser)}
+            </View>
+            {/* Рейтинг под аватаркой */}
+            <View style={styles.ratingContainer}>
+              <StarIcon width={16} height={16} color={colors.gold} />
+              <Text style={styles.ratingText}>{mockUser.rating}</Text>
             </View>
           </View>
           
@@ -375,7 +379,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgPrimary,
-    paddingTop: 50, // Отступ сверху для безопасной зоны
+  },
+  scrollContent: {
+    flex: 1,
+    paddingTop: 100, // Отступ для фиксированного TopBar
   },
   profileHeader: {
     padding: spacing.lg,
@@ -417,6 +424,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  ratingText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.gold,
+    marginLeft: 4,
   },
   reportsCountContainer: {
     paddingVertical: 4,
