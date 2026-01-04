@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as MediaLibrary from 'expo-media-library';
+import { captureRef } from 'react-native-view-shot';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../styles/theme';
 import { MenuIcon, CheckIcon, DoubleCheckIcon, XIcon } from './Icons';
 
@@ -18,6 +20,8 @@ export default function ChallengeCard({
   onUserPress 
 }: ChallengeCardProps) {
   const [menuVisible, setMenuVisible] = useState(false);
+  const [storyVisible, setStoryVisible] = useState(false);
+  const storyRef = useRef(null);
   
   const renderAvatar = () => {
     if (challenge.photoUrl) {
@@ -102,6 +106,36 @@ export default function ChallengeCard({
     const challengeLink = `https://greedy-badger-196.convex.site/challenge/${challenge._id}`;
     await Clipboard.setStringAsync(challengeLink);
     Alert.alert('Скопировано', 'Ссылка на цель скопирована в буфер обмена');
+  };
+
+  const handleGenerateStory = async () => {
+    setMenuVisible(false);
+    setStoryVisible(true);
+    
+    // Даём время на рендер
+    setTimeout(async () => {
+      try {
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Ошибка', 'Необходимо разрешение на сохранение в галерею');
+          setStoryVisible(false);
+          return;
+        }
+
+        const uri = await captureRef(storyRef, {
+          format: 'png',
+          quality: 1,
+        });
+
+        await MediaLibrary.saveToLibraryAsync(uri);
+        setStoryVisible(false);
+        Alert.alert('Готово!', 'Сторис сохранена в галерею');
+      } catch (error) {
+        console.error('Error generating story:', error);
+        setStoryVisible(false);
+        Alert.alert('Ошибка', 'Не удалось сгенерировать сторис');
+      }
+    }, 100);
   };
 
   if (variant === 'full') {
@@ -238,6 +272,12 @@ export default function ChallengeCard({
             <View style={styles.menuContainer}>
               <TouchableOpacity 
                 style={styles.menuItem}
+                onPress={handleGenerateStory}
+              >
+                <Text style={styles.menuItemText}>📸 Сгенерировать сторис</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.menuItem}
                 onPress={handleCopyLink}
               >
                 <Text style={styles.menuItemText}>Скопировать ссылку</Text>
@@ -251,6 +291,51 @@ export default function ChallengeCard({
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+      
+      {/* Story Generation Modal */}
+      <Modal
+        visible={storyVisible}
+        transparent={true}
+        animationType="none"
+      >
+        <View style={styles.storyModalContainer}>
+          <View ref={storyRef} style={styles.storyCanvas} collapsable={false}>
+            {/* Градиентный фон */}
+            <View style={styles.storyBackground}>
+              {/* Контент сторис */}
+              <View style={styles.storyContent}>
+                <Text style={styles.storyLogo}>POFACTU</Text>
+                
+                <View style={styles.storyMain}>
+                  <Text style={styles.storyEmoji}>🎯</Text>
+                  <Text style={styles.storyTitle}>{challenge.title}</Text>
+                  
+                  <View style={styles.storyDetails}>
+                    <View style={styles.storyDetailItem}>
+                      <Text style={styles.storyDetailLabel}>Ставка</Text>
+                      <Text style={styles.storyDetailValue}>${challenge.stakeAmount}</Text>
+                    </View>
+                    
+                    <View style={styles.storyDetailItem}>
+                      <Text style={styles.storyDetailLabel}>Дедлайн</Text>
+                      <Text style={styles.storyDetailValue}>
+                        {new Date(challenge.deadline).toLocaleDateString('ru-RU', { 
+                          day: 'numeric', 
+                          month: 'long' 
+                        })}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.storyUsername}>@{challenge.username}</Text>
+                </View>
+                
+                <Text style={styles.storyFooter}>Следи за моим прогрессом!</Text>
+              </View>
+            </View>
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -450,5 +535,84 @@ const styles = StyleSheet.create({
   },
   menuItemCancel: {
     color: colors.textMuted,
+  },
+  // Story styles
+  storyModalContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    left: -10000, // Скрываем за экраном
+  },
+  storyCanvas: {
+    width: 1080,
+    height: 1920,
+  },
+  storyBackground: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#0a1612',
+  },
+  storyContent: {
+    flex: 1,
+    padding: 60,
+    justifyContent: 'space-between',
+  },
+  storyLogo: {
+    fontSize: 48,
+    fontWeight: '900',
+    color: colors.lime,
+    letterSpacing: 2,
+    textAlign: 'center',
+  },
+  storyMain: {
+    alignItems: 'center',
+    gap: 40,
+  },
+  storyEmoji: {
+    fontSize: 120,
+  },
+  storyTitle: {
+    fontSize: 56,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 68,
+    paddingHorizontal: 40,
+  },
+  storyDetails: {
+    flexDirection: 'row',
+    gap: 60,
+    marginTop: 40,
+  },
+  storyDetailItem: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(132, 204, 22, 0.1)',
+    paddingVertical: 30,
+    paddingHorizontal: 50,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(132, 204, 22, 0.3)',
+  },
+  storyDetailLabel: {
+    fontSize: 28,
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  storyDetailValue: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: colors.lime,
+  },
+  storyUsername: {
+    fontSize: 40,
+    color: colors.lime,
+    fontWeight: '600',
+    marginTop: 40,
+  },
+  storyFooter: {
+    fontSize: 32,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
