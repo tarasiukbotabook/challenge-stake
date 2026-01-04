@@ -10,8 +10,9 @@ import FeedScreen from './src/screens/FeedScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import CreateChallengeScreen from './src/screens/CreateChallengeScreen';
 
-// Convex client
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
+// Convex client - убедимся что URL правильный
+const CONVEX_URL = process.env.EXPO_PUBLIC_CONVEX_URL || 'https://lovable-mongoose-763.convex.cloud';
+const convex = new ConvexReactClient(CONVEX_URL);
 
 const Stack = createNativeStackNavigator();
 

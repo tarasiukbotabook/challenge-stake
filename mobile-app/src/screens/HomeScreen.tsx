@@ -11,10 +11,16 @@ import { api } from '../../convex/_generated/api';
 
 export default function HomeScreen({ navigation }: any) {
   // TODO: Implement authentication
-  const userId = 'temp_user_id'; // Временно, пока не реализована авторизация
-  
-  const challenges = useQuery(api.challenges.getMy, { userId });
-  const stats = useQuery(api.users.getUserStats, { userId });
+  // Временно отключаем Convex queries для тестирования UI
+  const challenges = null; // useQuery(api.challenges.getMy, { userId });
+  const stats = null; // useQuery(api.users.getUserStats, { userId });
+
+  // Моковые данные для тестирования
+  const mockStats = {
+    balance: 1000,
+    activeChallenges: 3,
+    completedChallenges: 5,
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -24,22 +30,20 @@ export default function HomeScreen({ navigation }: any) {
       </View>
 
       {/* Stats */}
-      {stats && (
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>${stats.balance}</Text>
-            <Text style={styles.statLabel}>Баланс</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.activeChallenges}</Text>
-            <Text style={styles.statLabel}>Активных</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.completedChallenges}</Text>
-            <Text style={styles.statLabel}>Выполнено</Text>
-          </View>
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>${mockStats.balance}</Text>
+          <Text style={styles.statLabel}>Баланс</Text>
         </View>
-      )}
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{mockStats.activeChallenges}</Text>
+          <Text style={styles.statLabel}>Активных</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{mockStats.completedChallenges}</Text>
+          <Text style={styles.statLabel}>Выполнено</Text>
+        </View>
+      </View>
 
       {/* Actions */}
       <View style={styles.actionsContainer}>
@@ -68,17 +72,7 @@ export default function HomeScreen({ navigation }: any) {
       {/* Recent Challenges */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Мои челленджи</Text>
-        {challenges && challenges.length > 0 ? (
-          challenges.slice(0, 3).map((challenge: any) => (
-            <View key={challenge._id} style={styles.challengeCard}>
-              <Text style={styles.challengeTitle}>{challenge.title}</Text>
-              <Text style={styles.challengeAmount}>${challenge.stakeAmount}</Text>
-              <Text style={styles.challengeStatus}>{challenge.status}</Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>Пока нет челленджей</Text>
-        )}
+        <Text style={styles.emptyText}>Пока нет челленджей</Text>
       </View>
     </ScrollView>
   );

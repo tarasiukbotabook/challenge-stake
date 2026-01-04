@@ -4,26 +4,13 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
 export default function FeedScreen() {
-  const reports = useQuery(api.challenges.getAllReports, {});
+  // Временно отключаем для тестирования UI
+  const reports = null; // useQuery(api.challenges.getAllReports, {});
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Лента отчётов</Text>
-      {reports && reports.length > 0 ? (
-        reports.map((report: any) => (
-          <View key={report._id} style={styles.reportCard}>
-            <Text style={styles.reportUser}>{report.username}</Text>
-            <Text style={styles.reportChallenge}>{report.challengeTitle}</Text>
-            <Text style={styles.reportContent}>{report.content}</Text>
-            <View style={styles.reportStats}>
-              <Text style={styles.reportStat}>✅ {report.verifyVotes || 0}</Text>
-              <Text style={styles.reportStat}>❌ {report.fakeVotes || 0}</Text>
-            </View>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.emptyText}>Пока нет отчётов</Text>
-      )}
+      <Text style={styles.emptyText}>Пока нет отчётов</Text>
     </ScrollView>
   );
 }
