@@ -425,81 +425,110 @@ export const voteReport = mutation({
   },
   handler: async (ctx, args) => {
     console.log('=== voteReport called ===');
-    console.log('args:', args);
+    console.log('args:', JSON.stringify(args, null, 2));
     
-    const report = await ctx.db.get(args.progressUpdateId);
-    if (!report) throw new Error("Отчёт не найден");
-    
-    console.log('report found:', report._id);
-    
-    // Проверяем, голосовал ли уже пользователь
-    const existingVote = await ctx.db
-      .query("reportVotes")
-      .withIndex("by_user_and_report", (q) => 
-        q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
-      )
-      .first();
-    
-    if (existingVote) {
-      // Если голос такой же - убираем
-      if (existingVote.voteType === args.voteType) {
-        await ctx.db.delete(existingVote._id);
-        
-        // Уменьшаем счётчик
-        if (args.voteType === 'verify') {
-          await ctx.db.patch(args.progressUpdateId, {
-            verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
-          });
+    try {
+      const report = await ctx.db.get(args.progressUpdateId);
+      if (!report) {
+        console.error('Report not found:', args.progressUpdateId);
+        throw new Error("Отчёт не найден");
+      }
+      
+      console.log('report found:', report._id);
+      
+      // Проверяем, голосовал ли уже пользователь
+      console.log('Checking existing vote...');
+      const existingVote = await ctx.db
+        .query("reportVotes")
+        .withIndex("by_user_and_report", (q) => 
+          q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
+        )
+        .first();
+      
+      console.log('existingVote:', existingVote ? existingVote._id : 'none');
+      
+      if (existingVote) {
+        // Если голос такой же - убираем
+        if (existingVote.voteType === args.voteType) {
+          console.log('Removing vote (same type)');
+          await ctx.db.delete(existingVote._id);
+          
+          // Уменьшаем счётчик
+          if (args.voteType === 'verify') {
+            await ctx.db.patch(args.progressUpdateId, {
+              verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
+            });
+          } else {
+            await ctx.db.patch(args.progressUpdateId, {
+              fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
+            });
+          }
+          
+          console.log('Vote removed successfully');
+          return { voted: false, voteType: null };
         } else {
-          await ctx.db.patch(args.progressUpdateId, {
-            fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
+          // Меняем тип голоса
+          console.log('Changing vote type');
+          await ctx.db.patch(existingVote._id, {
+            voteType: args.voteType,
+            ...(args.reason && { reason: args.reason }),
           });
+          
+          // Обновляем счётчики
+          if (args.voteType === 'verify') {
+            await ctx.db.patch(args.progressUpdateId, {
+              verifyVotes: (report.verifyVotes || 0) + 1,
+              fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
+            });
+          } else {
+            await ctx.db.patch(args.progressUpdateId, {
+              fakeVotes: (report.fakeVotes || 0) + 1,
+              verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
+            });
+          }
+          
+          console.log('Vote changed successfully');
+          return { voted: true, voteType: args.voteType };
         }
-        
-        return { voted: false, voteType: null };
       } else {
-        // Меняем тип голоса
-        await ctx.db.patch(existingVote._id, {
+        // Добавляем новый голос
+        console.log('Adding new vote');
+        console.log('Insert data:', {
+          progressUpdateId: args.progressUpdateId,
+          userId: args.userId,
+          voteType: args.voteType,
+          hasReason: !!args.reason,
+        });
+        
+        await ctx.db.insert("reportVotes", {
+          progressUpdateId: args.progressUpdateId,
+          userId: args.userId,
           voteType: args.voteType,
           ...(args.reason && { reason: args.reason }),
         });
         
-        // Обновляем счётчики
+        console.log('Vote inserted, updating counters');
+        
+        // Увеличиваем счётчик
         if (args.voteType === 'verify') {
           await ctx.db.patch(args.progressUpdateId, {
             verifyVotes: (report.verifyVotes || 0) + 1,
-            fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
           });
         } else {
           await ctx.db.patch(args.progressUpdateId, {
             fakeVotes: (report.fakeVotes || 0) + 1,
-            verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
           });
         }
         
+        console.log('Vote added successfully');
         return { voted: true, voteType: args.voteType };
       }
-    } else {
-      // Добавляем новый голос
-      await ctx.db.insert("reportVotes", {
-        progressUpdateId: args.progressUpdateId,
-        userId: args.userId,
-        voteType: args.voteType,
-        ...(args.reason && { reason: args.reason }),
-      });
-      
-      // Увеличиваем счётчик
-      if (args.voteType === 'verify') {
-        await ctx.db.patch(args.progressUpdateId, {
-          verifyVotes: (report.verifyVotes || 0) + 1,
-        });
-      } else {
-        await ctx.db.patch(args.progressUpdateId, {
-          fakeVotes: (report.fakeVotes || 0) + 1,
-        });
-      }
-      
-      return { voted: true, voteType: args.voteType };
+    } catch (error) {
+      console.error('=== voteReport ERROR ===');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      throw error;
     }
   },
 });
