@@ -29,6 +29,7 @@ export const create = mutation({
       description: args.description,
       imageUrl: args.imageUrl,
       stakeAmount: args.stakeAmount,
+      donationsAmount: 0,
       deadline: args.deadline,
       category: args.category,
       status: "active",
@@ -178,6 +179,10 @@ export const addProgress = mutation({
       content: args.content,
       socialLink: args.socialLink,
       imageUrl: args.imageUrl,
+      likesCount: 0,
+      verifyVotes: 0,
+      fakeVotes: 0,
+      verificationStatus: "pending",
     });
 
     return { updateId };
