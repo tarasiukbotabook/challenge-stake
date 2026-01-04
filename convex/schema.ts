@@ -49,7 +49,9 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     socialLink: v.optional(v.string()),
     likesCount: v.optional(v.number()),
-  }).index("by_challenge", ["challengeId"]),
+    verificationStatus: v.optional(v.string()), // 'pending', 'verified', 'fake'
+  }).index("by_challenge", ["challengeId"])
+    .index("by_status", ["verificationStatus"]),
   
   likes: defineTable({
     progressUpdateId: v.id("progressUpdates"),
