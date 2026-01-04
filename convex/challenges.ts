@@ -56,6 +56,16 @@ export const create = mutation({
       rating: currentRating + 10,
     });
 
+    // Создаём уведомление о начислении рейтинга
+    await ctx.db.insert("notifications", {
+      userId: args.userId,
+      type: "rating",
+      title: "Рейтинг увеличен",
+      message: "Вы получили +10 баллов рейтинга за создание цели",
+      amount: 10,
+      isRead: false,
+    });
+
     return { challengeId };
   },
 });
@@ -194,6 +204,15 @@ export const addProgress = mutation({
       fakeVotes: 0,
       verificationStatus: "pending",
     });
+
+    // Начисляем рейтинг за создание отчёта (+1 балл)
+    const user = await ctx.db.get(args.userId);
+    if (user) {
+      const currentRating = user.rating || 0;
+      await ctx.db.patch(args.userId, {
+        rating: currentRating + 1,
+      });
+    }
 
     return { updateId };
   },
@@ -514,5 +533,385 @@ export const checkReportVote = query({
       .first();
     
     return vote ? { voteType: vote.voteType } : null;
+  },
+});
+
+// Получить активные челленджи пользователя
+export const getUserActiveChallenges = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const challenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .order("desc")
+      .collect();
+    
+    return challenges;
+  },
+});
+
+// Создать отчёт (алиас для addProgress)
+export const createReport = mutation({
+  args: {
+    userId: v.id("users"),
+    challengeId: v.id("challenges"),
+    content: v.string(),
+    socialLink: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (!challenge) throw new Error("Челлендж не найден");
+    if (challenge.userId !== args.userId) throw new Error("Нет доступа");
+    if (challenge.status !== "active") throw new Error("Челлендж неактивен");
+
+    const updateId = await ctx.db.insert("progressUpdates", {
+      challengeId: args.challengeId,
+      userId: args.userId,
+      content: args.content,
+      socialLink: args.socialLink,
+      imageUrl: args.imageUrl,
+      tags: args.tags || [],
+      likesCount: 0,
+      verifyVotes: 0,
+      fakeVotes: 0,
+      verificationStatus: "pending",
+    });
+
+    // Начисляем рейтинг за создание отчёта (+1 балл)
+    const user = await ctx.db.get(args.userId);
+    if (user) {
+      const currentRating = user.rating || 0;
+      await ctx.db.patch(args.userId, {
+        rating: currentRating + 1,
+      });
+
+      // Создаём уведомление о начислении рейтинга
+      await ctx.db.insert("notifications", {
+        userId: args.userId,
+        type: "rating",
+        title: "Рейтинг увеличен",
+        message: "Вы получили +1 балл рейтинга за публикацию отчёта",
+        amount: 1,
+        isRead: false,
+      });
+    }
+
+    return { updateId };
+  },
+});
+
+// Получить список всех отчётов (алиас для getAllReports)
+export const listReports = query({
+  handler: async (ctx) => {
+    const reports = await ctx.db
+      .query("progressUpdates")
+      .order("desc")
+      .take(50);
+    
+    const allDonations = await ctx.db.query("donations").collect();
+
+    const enriched = await Promise.all(
+      reports.map(async (report) => {
+        const user = await ctx.db.get(report.userId);
+        const challenge = await ctx.db.get(report.challengeId);
+        
+        const donations = allDonations.filter(d => d.progressUpdateId === report._id);
+        const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
+        
+        return {
+          ...report,
+          username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
+          challengeTitle: challenge?.title || "Unknown",
+          donationsAmount: totalDonations,
+          verifyVotes: report.verifyVotes || 0,
+          fakeVotes: report.fakeVotes || 0,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+// Получить список всех челленджей (алиас для getAll)
+export const listChallenges = query({
+  handler: async (ctx) => {
+    const challenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .order("desc")
+      .collect();
+
+    const enriched = await Promise.all(
+      challenges.map(async (challenge) => {
+        const user = await ctx.db.get(challenge.userId);
+        
+        // Подсчитываем количество участников (уникальных пользователей с отчётами)
+        const allReports = await ctx.db
+          .query("progressUpdates")
+          .collect();
+        
+        const challengeReports = allReports.filter(r => r.challengeId === challenge._id);
+        const uniqueUsers = new Set(challengeReports.map(r => r.userId));
+        
+        return {
+          ...challenge,
+          username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
+          participantsCount: uniqueUsers.size,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+
+// Получить цель по ID
+export const getById = query({
+  args: { challengeId: v.id("challenges") },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (!challenge) return null;
+
+    const user = await ctx.db.get(challenge.userId);
+    
+    return {
+      ...challenge,
+      username: user?.username || 'unknown',
+      firstName: user?.firstName,
+      photoUrl: user?.photoUrl,
+    };
+  },
+});
+
+// Получить отчёты по цели
+export const getChallengeReports = query({
+  args: { challengeId: v.id("challenges") },
+  handler: async (ctx, args) => {
+    const reports = await ctx.db
+      .query("progressUpdates")
+      .withIndex("by_challenge", (q) => q.eq("challengeId", args.challengeId))
+      .order("desc")
+      .collect();
+
+    const allDonations = await ctx.db.query("donations").collect();
+
+    const enriched = await Promise.all(
+      reports.map(async (report) => {
+        const user = await ctx.db.get(report.userId);
+        const challenge = await ctx.db.get(report.challengeId);
+        
+        const donations = allDonations.filter(d => d.progressUpdateId === report._id);
+        const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
+        
+        return {
+          ...report,
+          username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
+          challengeTitle: challenge?.title || "Unknown",
+          donationsAmount: totalDonations,
+          verifyVotes: report.verifyVotes || 0,
+          fakeVotes: report.fakeVotes || 0,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+// Получить уведомления о донатах для пользователя
+export const getUserDonationNotifications = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    // Получаем все отчёты пользователя
+    const userReports = await ctx.db
+      .query("progressUpdates")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .collect();
+
+    const reportIds = userReports.map(r => r._id);
+
+    // Получаем все донаты к отчётам пользователя
+    const allDonations = await ctx.db.query("donations").collect();
+    const userDonations = allDonations.filter(d => 
+      d.progressUpdateId && reportIds.includes(d.progressUpdateId)
+    );
+
+    // Обогащаем данные информацией о донаторе
+    const enriched = await Promise.all(
+      userDonations.map(async (donation) => {
+        const donor = await ctx.db.get(donation.donorUserId);
+        const report = await ctx.db.get(donation.progressUpdateId!);
+        const challenge = report ? await ctx.db.get(report.challengeId) : null;
+        
+        return {
+          _id: donation._id,
+          _creationTime: donation._creationTime,
+          amount: donation.amount,
+          message: donation.message,
+          donorUsername: donor?.username || "Unknown",
+          donorUserId: donation.donorUserId,
+          challengeTitle: challenge?.title || "Unknown",
+          reportContent: report?.content || "",
+        };
+      })
+    );
+
+    // Сортируем по времени (новые первыми)
+    return enriched.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+// Удалить отчёт (прогресс-апдейт)
+export const deleteProgressUpdate = mutation({
+  args: {
+    progressUpdateId: v.id("progressUpdates"),
+  },
+  handler: async (ctx, args) => {
+    const progressUpdate = await ctx.db.get(args.progressUpdateId);
+    
+    if (!progressUpdate) {
+      throw new Error("Отчёт не найден");
+    }
+
+    // Снимаем рейтинг за удаление отчёта (-1 балл)
+    const user = await ctx.db.get(progressUpdate.userId);
+    if (user) {
+      const currentRating = user.rating || 0;
+      await ctx.db.patch(progressUpdate.userId, {
+        rating: Math.max(0, currentRating - 1), // Не даём рейтингу уйти в минус
+      });
+
+      // Создаём уведомление о снятии рейтинга
+      await ctx.db.insert("notifications", {
+        userId: progressUpdate.userId,
+        type: "rating",
+        title: "Рейтинг уменьшен",
+        message: "С вас снято -1 балл рейтинга за удаление отчёта",
+        amount: -1,
+        isRead: false,
+      });
+    }
+
+    // Удаляем отчёт
+    await ctx.db.delete(args.progressUpdateId);
+
+    // Удаляем все голоса за этот отчёт
+    const votes = await ctx.db
+      .query("reportVotes")
+      .filter((q) => q.eq(q.field("progressUpdateId"), args.progressUpdateId))
+      .collect();
+    
+    for (const vote of votes) {
+      await ctx.db.delete(vote._id);
+    }
+
+    // Удаляем все донаты к этому отчёту
+    const donations = await ctx.db
+      .query("donations")
+      .filter((q) => q.eq(q.field("progressUpdateId"), args.progressUpdateId))
+      .collect();
+    
+    for (const donation of donations) {
+      await ctx.db.delete(donation._id);
+    }
+
+    return { success: true };
+  },
+});
+
+// Удалить цель
+export const deleteChallenge = mutation({
+  args: {
+    challengeId: v.id("challenges"),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    
+    if (!challenge) {
+      throw new Error("Цель не найдена");
+    }
+
+    // Снимаем рейтинг за удаление цели (-10 баллов)
+    const user = await ctx.db.get(challenge.userId);
+    if (user) {
+      const currentRating = user.rating || 0;
+      await ctx.db.patch(challenge.userId, {
+        rating: Math.max(0, currentRating - 10), // Не даём рейтингу уйти в минус
+      });
+
+      // Создаём уведомление о снятии рейтинга
+      await ctx.db.insert("notifications", {
+        userId: challenge.userId,
+        type: "rating",
+        title: "Рейтинг уменьшен",
+        message: "С вас снято -10 баллов рейтинга за удаление цели",
+        amount: -10,
+        isRead: false,
+      });
+    }
+
+    // Удаляем все отчёты по этой цели
+    const reports = await ctx.db
+      .query("progressUpdates")
+      .filter((q) => q.eq(q.field("challengeId"), args.challengeId))
+      .collect();
+    
+    for (const report of reports) {
+      // Удаляем голоса за отчёт
+      const votes = await ctx.db
+        .query("reportVotes")
+        .filter((q) => q.eq(q.field("progressUpdateId"), report._id))
+        .collect();
+      
+      for (const vote of votes) {
+        await ctx.db.delete(vote._id);
+      }
+      
+      // Удаляем донаты к отчёту
+      const donations = await ctx.db
+        .query("donations")
+        .filter((q) => q.eq(q.field("progressUpdateId"), report._id))
+        .collect();
+      
+      for (const donation of donations) {
+        await ctx.db.delete(donation._id);
+      }
+      
+      await ctx.db.delete(report._id);
+    }
+
+    // Удаляем донаты к цели
+    const challengeDonations = await ctx.db
+      .query("donations")
+      .filter((q) => q.eq(q.field("challengeId"), args.challengeId))
+      .collect();
+    
+    for (const donation of challengeDonations) {
+      await ctx.db.delete(donation._id);
+    }
+
+    // Удаляем транзакции
+    const transactions = await ctx.db.query("transactions").collect();
+    const challengeTransactions = transactions.filter(t => t.challengeId === args.challengeId);
+    
+    for (const transaction of challengeTransactions) {
+      await ctx.db.delete(transaction._id);
+    }
+
+    // Удаляем саму цель
+    await ctx.db.delete(args.challengeId);
+
+    return { success: true };
   },
 });

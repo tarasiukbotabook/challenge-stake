@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     password: v.optional(v.string()),
     telegramId: v.optional(v.string()),
+    phone: v.optional(v.string()), // Номер телефона
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     photoUrl: v.optional(v.string()),
@@ -15,8 +16,11 @@ export default defineSchema({
     balance: v.number(),
     premium: v.boolean(),
     rating: v.optional(v.number()), // Рейтинг пользователя
+    role: v.optional(v.string()), // Роль пользователя
+    isPrivate: v.optional(v.boolean()), // Скрытый профиль
   }).index("by_email", ["email"])
-    .index("by_telegram", ["telegramId"]),
+    .index("by_telegram", ["telegramId"])
+    .index("by_username", ["username"]),
 
   challenges: defineTable({
     userId: v.id("users"),
@@ -86,4 +90,15 @@ export default defineSchema({
     type: v.string(), // 'stake', 'refund', 'charity', 'deposit'
     description: v.string(),
   }).index("by_user", ["userId"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.string(), // 'rating', 'balance', 'donation', 'challenge', 'report'
+    title: v.string(),
+    message: v.string(),
+    amount: v.optional(v.number()), // Для уведомлений о балансе/рейтинге
+    isRead: v.boolean(),
+    relatedId: v.optional(v.string()), // ID связанной сущности
+  }).index("by_user", ["userId"])
+    .index("by_user_and_read", ["userId", "isRead"]),
 });

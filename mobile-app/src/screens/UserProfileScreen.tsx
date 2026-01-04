@@ -3,12 +3,28 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIn
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../styles/theme';
-import { SettingsIcon } from '../components/Icons';
-import TopBar from '../components/TopBar';
+import { BackIcon, StarIcon } from '../components/Icons';
 import ReportCard from '../components/ReportCard';
 import ChallengeCard from '../components/ChallengeCard';
 
-export default function ProfileScreen({ navigation, route, userId }: any) {
+export default function UserProfileScreen({ navigation, route }: any) {
+  const { targetUserId, currentUserId } = route?.params || {};
+  
+  // Если параметры не переданы, показываем ошибку
+  if (!targetUserId || !currentUserId) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={styles.emptyText}>Ошибка загрузки профиля</Text>
+        <TouchableOpacity 
+          style={{ marginTop: 20, padding: 12, backgroundColor: colors.lime, borderRadius: 8 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: colors.textPrimary, fontWeight: 'bold' }}>Назад</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  
   const [activeTab, setActiveTab] = useState<'challenges' | 'reports'>('challenges');
   const [donateModalVisible, setDonateModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
@@ -19,10 +35,13 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
   const [isDonating, setIsDonating] = useState(false);
   const [toastAnim] = useState(new Animated.Value(-100));
   
-  // Загрузка реальных данных пользователя
-  const userStats = useQuery(api.users.getUserStats, userId ? { userId } : 'skip');
-  const userChallenges = useQuery(api.challenges.getMy, userId ? { userId } : 'skip');
-  const userReports = useQuery(api.challenges.getUserReports, userId ? { userId } : 'skip');
+  // Загрузка данных пользователя
+  const userStats = useQuery(api.users.getUserStats, targetUserId ? { userId: targetUserId } : 'skip');
+  const userChallenges = useQuery(api.challenges.getMy, targetUserId ? { userId: targetUserId } : 'skip');
+  const userReports = useQuery(api.challenges.getUserReports, targetUserId ? { userId: targetUserId } : 'skip');
+  
+  // Загрузка баланса текущего пользователя для донатов
+  const currentUserStats = useQuery(api.users.getUserStats, currentUserId ? { userId: currentUserId } : 'skip');
   
   // Мутация для доната
   const donate = useMutation(api.challenges.donate);
@@ -48,19 +67,20 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
   };
 
   const handleDonateSubmit = async () => {
-    if (!userId || !selectedReport) return;
+    if (!currentUserId || !selectedReport) return;
     
     const amount = parseFloat(donateAmount);
+    const balance = currentUserStats?.balance || 0;
     
     if (!amount || amount <= 0) {
       Alert.alert('Ошибка', 'Введите корректную сумму');
       return;
     }
     
-    if (amount > mockStats.balance) {
+    if (amount > balance) {
       Alert.alert(
         'Недостаточно средств',
-        `На вашем балансе $${mockStats.balance}. Пополните баланс для отправки доната.`,
+        `На вашем балансе $${balance}. Пополните баланс для отправки доната.`,
         [{ text: 'OK' }]
       );
       return;
@@ -72,7 +92,7 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
       await donate({
         challengeId: selectedReport.challengeId,
         progressUpdateId: selectedReport._id,
-        donorUserId: userId,
+        donorUserId: currentUserId,
         amount: amount,
         message: donateMessage || undefined,
       });
@@ -106,7 +126,6 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
     }
   };
 
-  // Показываем загрузку пока данные не загрузились
   if (userStats === undefined) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -116,7 +135,7 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
     );
   }
 
-  const mockUser = {
+  const user = {
     username: userStats?.username || 'user',
     firstName: userStats?.firstName || 'Пользователь',
     lastName: userStats?.lastName || '',
@@ -126,11 +145,10 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
     rating: userStats?.rating || 0,
   };
 
-  const mockStats = {
+  const stats = {
     total: userStats?.total || 0,
     completed: userStats?.completed || 0,
     active: userStats?.active || 0,
-    balance: userStats?.balance || 0,
   };
 
   const challenges = userChallenges || [];
@@ -139,53 +157,52 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-      {/* Top Bar */}
-      <TopBar 
-        balance={mockStats.balance} 
-        rating={mockUser.rating}
-        onBalancePress={() => navigation.navigate('AddBalance', { userId })}
-        onNotificationsPress={() => navigation.navigate('Notifications', { userId })}
-        unreadCount={0}
-      />
-      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <BackIcon color={colors.lime} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Профиль</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+    <ScrollView style={styles.content}>
       {/* Profile Header - Компактный */}
       <View style={styles.profileHeader}>
-        <TouchableOpacity 
-          style={styles.btnSettings}
-          onPress={() => navigation.navigate('Settings')}
-        >
-          <SettingsIcon color={colors.lime} />
-        </TouchableOpacity>
-        
         <View style={styles.profileContent}>
           {/* Аватарка слева */}
           <View style={styles.avatarContainer}>
             <View style={styles.profileAvatar}>
-              {renderAvatar(mockUser)}
+              {renderAvatar(user)}
+            </View>
+            {/* Рейтинг под аватаркой */}
+            <View style={styles.ratingContainer}>
+              <StarIcon width={16} height={16} color={colors.gold} />
+              <Text style={styles.ratingText}>{user.rating}</Text>
             </View>
           </View>
           
           {/* Информация справа */}
           <View style={styles.profileInfo}>
-            <TouchableOpacity>
-              <Text style={styles.profileUsername}>@{mockUser.username}</Text>
-            </TouchableOpacity>
+            <Text style={styles.profileUsername}>@{user.username}</Text>
             
-            {mockUser.firstName && (
+            {user.firstName && (
               <Text style={styles.profileName}>
-                {[mockUser.firstName, mockUser.lastName].filter(Boolean).join(' ')}
+                {[user.firstName, user.lastName].filter(Boolean).join(' ')}
               </Text>
             )}
             
-            {mockUser.bio && (
-              <Text style={styles.bioText}>{mockUser.bio}</Text>
+            {user.bio && (
+              <Text style={styles.bioText}>{user.bio}</Text>
             )}
             
-            {mockUser.website && (
+            {user.website && (
               <TouchableOpacity>
                 <Text style={styles.websiteLink}>
-                  {mockUser.website.replace(/^https?:\/\//, '')}
+                  {user.website.replace(/^https?:\/\//, '')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -196,17 +213,17 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
       {/* Stats */}
       <View style={styles.statsCompact}>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{mockStats.total}</Text>
+          <Text style={styles.statNumber}>{stats.total}</Text>
           <Text style={styles.statText}>Всего</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{mockStats.completed}</Text>
+          <Text style={styles.statNumber}>{stats.completed}</Text>
           <Text style={styles.statText}>Выполнено</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{mockStats.active}</Text>
+          <Text style={styles.statNumber}>{stats.active}</Text>
           <Text style={styles.statText}>Активных</Text>
         </View>
         <View style={styles.statDivider} />
@@ -214,16 +231,6 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
           <Text style={styles.statNumber}>{reportsCount}</Text>
           <Text style={styles.statText}>Отчётов</Text>
         </View>
-      </View>
-
-      {/* Create Challenge Button */}
-      <View style={styles.createButtonContainer}>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => navigation.navigate('CreateChallenge', { userId })}
-        >
-          <Text style={styles.createButtonText}>Создать цель</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Tabs */}
@@ -260,7 +267,7 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
                 key={challenge._id}
                 challenge={challenge}
                 variant="full"
-                onPress={() => navigation.navigate('ChallengeDetail', { challengeId: challenge._id, userId: userId })}
+                onPress={() => navigation.navigate('ChallengeDetail', { challengeId: challenge._id, userId: currentUserId })}
               />
             ))
           )
@@ -275,8 +282,8 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
               <ReportCard
                 key={report._id}
                 report={report}
-                currentUserId={userId}
-                currentUserBalance={mockStats.balance}
+                currentUserId={currentUserId}
+                currentUserBalance={currentUserStats?.balance || 0}
                 onDonatePress={handleDonatePress}
               />
             ))
@@ -375,29 +382,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgPrimary,
-    paddingTop: 50, // Отступ сверху для безопасной зоны
   },
-  profileHeader: {
-    padding: spacing.lg,
-    paddingTop: spacing.md,
-    position: 'relative',
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
     backgroundColor: colors.bgSecondary,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
-  btnSettings: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(132, 204, 22, 0.1)',
-    borderWidth: 1,
-    borderColor: colors.border,
+  backButton: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
+  },
+  headerTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+  },
+  placeholder: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+  },
+  profileHeader: {
+    padding: spacing.lg,
+    paddingTop: spacing.lg,
+    backgroundColor: colors.bgSecondary,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
   profileContent: {
     flexDirection: 'row',
@@ -417,6 +436,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  ratingText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.gold,
+    marginLeft: 4,
   },
   reportsCountContainer: {
     paddingVertical: 4,
