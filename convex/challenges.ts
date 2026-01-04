@@ -454,10 +454,16 @@ export const voteReport = mutation({
         return { voted: false, voteType: null };
       } else {
         // Меняем тип голоса
-        await ctx.db.patch(existingVote._id, {
+        const patchData: any = {
           voteType: args.voteType,
-          reason: args.reason,
-        });
+        };
+        
+        // Добавляем reason только если он есть
+        if (args.reason) {
+          patchData.reason = args.reason;
+        }
+        
+        await ctx.db.patch(existingVote._id, patchData);
         
         // Обновляем счётчики
         if (args.voteType === 'verify') {
@@ -476,12 +482,18 @@ export const voteReport = mutation({
       }
     } else {
       // Добавляем новый голос
-      await ctx.db.insert("reportVotes", {
+      const voteData: any = {
         progressUpdateId: args.progressUpdateId,
         userId: args.userId,
         voteType: args.voteType,
-        reason: args.reason,
-      });
+      };
+      
+      // Добавляем reason только если он есть
+      if (args.reason) {
+        voteData.reason = args.reason;
+      }
+      
+      await ctx.db.insert("reportVotes", voteData);
       
       // Увеличиваем счётчик
       if (args.voteType === 'verify') {
