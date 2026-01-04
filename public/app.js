@@ -1127,21 +1127,18 @@ window.showFeedReports = async function() {
             ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
               <div style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn-like" onclick="toggleLike('${report._id}', this)">
+                <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждаю">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                  <span class="like-count">${report.likesCount || 0}</span>
-                </button>
-                <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждён">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
                   </svg>
                   <span class="vote-count">${report.verifyVotes || 0}</span>
                 </button>
-                <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Фейк">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Не верю">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
                   </svg>
                   <span class="vote-count">${report.fakeVotes || 0}</span>
                 </button>
@@ -1503,57 +1500,46 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
       reason: reason
     });
     
-    // Обновляем UI
-    const voteCount = buttonElement.querySelector('.vote-count');
-    const currentCount = parseInt(voteCount.textContent) || 0;
-    
     // Находим обе кнопки голосования для этого отчёта
     const reportCard = buttonElement.closest('.report-card');
     const verifyBtn = reportCard.querySelector('.btn-vote-verify');
     const fakeBtn = reportCard.querySelector('.btn-vote-fake');
+    const verifyCount = verifyBtn.querySelector('.vote-count');
+    const fakeCount = fakeBtn.querySelector('.vote-count');
     
     if (result.voted) {
       // Голос добавлен или изменён
-      if (voteType === 'verify') {
+      if (result.voteType === 'verify') {
         verifyBtn.classList.add('voted');
         fakeBtn.classList.remove('voted');
-        
-        // Обновляем счётчики
-        const verifyCount = verifyBtn.querySelector('.vote-count');
-        const fakeCount = fakeBtn.querySelector('.vote-count');
-        
-        if (result.voteType === voteType) {
-          // Новый голос
-          verifyCount.textContent = currentCount + 1;
-        } else {
-          // Изменили голос с fake на verify
-          verifyCount.textContent = currentCount + 1;
-          fakeCount.textContent = Math.max(0, parseInt(fakeCount.textContent) - 1);
-        }
       } else {
         fakeBtn.classList.add('voted');
         verifyBtn.classList.remove('voted');
-        
-        // Обновляем счётчики
-        const verifyCount = verifyBtn.querySelector('.vote-count');
-        const fakeCount = fakeBtn.querySelector('.vote-count');
-        
-        if (result.voteType === voteType) {
-          // Новый голос
-          fakeCount.textContent = currentCount + 1;
-        } else {
-          // Изменили голос с verify на fake
-          fakeCount.textContent = currentCount + 1;
-          verifyCount.textContent = Math.max(0, parseInt(verifyCount.textContent) - 1);
-        }
       }
       
       showToast('Голос учтён', 'success');
     } else {
       // Голос убран
-      buttonElement.classList.remove('voted');
-      voteCount.textContent = Math.max(0, currentCount - 1);
+      verifyBtn.classList.remove('voted');
+      fakeBtn.classList.remove('voted');
       showToast('Голос отменён', 'info');
+    }
+    
+    // Перезагружаем отчёты чтобы получить актуальные счётчики
+    const feedScreen = document.getElementById('feed-screen');
+    if (feedScreen && feedScreen.classList.contains('active')) {
+      await showFeedReports();
+    }
+    
+    // Если мы в профиле, обновляем вкладку отчётов
+    const profileScreen = document.getElementById('user-profile-screen');
+    if (profileScreen && profileScreen.classList.contains('active')) {
+      const activeTab = document.querySelector('#user-profile-screen .tab-btn.active');
+      if (activeTab && activeTab.textContent.includes('Отчёты')) {
+        // Получаем userId из атрибута или из currentUser
+        const userId = currentUser.id;
+        await showProfileTab(userId, 'reports');
+      }
     }
     
     if (tg) {
@@ -2212,21 +2198,18 @@ window.showProfileTab = async function(userId, tab) {
               ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <button class="btn-like" onclick="toggleLike('${report._id}', this)">
+                  <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждаю">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                    <span class="like-count">${report.likesCount || 0}</span>
-                  </button>
-                  <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждён">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                      <polyline points="9 12 11 14 15 10"></polyline>
                     </svg>
                     <span class="vote-count">${report.verifyVotes || 0}</span>
                   </button>
-                  <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Фейк">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Не верю">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="15" y1="9" x2="9" y2="15"></line>
+                      <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg>
                     <span class="vote-count">${report.fakeVotes || 0}</span>
                   </button>

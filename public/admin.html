@@ -192,6 +192,16 @@
       background: rgba(239, 68, 68, 0.3);
     }
 
+    .btn-secondary {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 193, 7, 0.3);
+    }
+
     .loading {
       text-align: center;
       padding: 40px;
@@ -489,10 +499,11 @@
                 fake: '<span class="badge badge-fake">✗ Fake</span>',
               }[report.verificationStatus] || '<span class="badge badge-pending">На проверке</span>';
               
-              const actions = report.verificationStatus === 'pending' ? `
+              const actions = `
                 <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')">✓ Подтвердить</button>
                 <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')">✗ Fake</button>
-              ` : '-';
+                ${report.verificationStatus !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${report._id}', 'pending')" style="background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-top: 4px; width: 100%;">↻ Вернуть на проверку</button>` : ''}
+              `;
               
               return `
                 <tr>

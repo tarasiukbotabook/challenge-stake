@@ -694,9 +694,18 @@ body {
   transform: scale(0.95);
 }
 
-.btn-vote-verify.voted {
-  background: rgba(16, 185, 129, 0.1);
+.btn-vote-verify {
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.btn-vote-verify:hover {
+  background: rgba(16, 185, 129, 0.05);
   border-color: rgba(16, 185, 129, 0.3);
+}
+
+.btn-vote-verify.voted {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
   color: var(--accent-green);
 }
 
@@ -704,9 +713,18 @@ body {
   fill: var(--accent-green);
 }
 
-.btn-vote-fake.voted {
-  background: rgba(239, 68, 68, 0.1);
+.btn-vote-fake {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-vote-fake:hover {
+  background: rgba(239, 68, 68, 0.05);
   border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-vote-fake.voted {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
   color: #ef4444;
 }
 
