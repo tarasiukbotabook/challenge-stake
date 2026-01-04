@@ -1,10 +1,18 @@
+# Dependencies
 node_modules/
+
+# Logs
 *.log
+
+# Environment variables
 .env
 .env.local
+
+# OS files
 .DS_Store
+
+# Build output
 dist/
+
+# Convex
 .convex/
-
-
-.env.local
