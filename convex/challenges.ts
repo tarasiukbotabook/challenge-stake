@@ -297,10 +297,11 @@ export const getDonations = query({
 export const getReportDonations = query({
   args: { progressUpdateId: v.id("progressUpdates") },
   handler: async (ctx, args) => {
-    const donations = await ctx.db
+    const allDonations = await ctx.db
       .query("donations")
-      .withIndex("by_progress", (q) => q.eq("progressUpdateId", args.progressUpdateId))
       .collect();
+    
+    const donations = allDonations.filter(d => d.progressUpdateId === args.progressUpdateId);
 
     const enriched = await Promise.all(
       donations.map(async (donation) => {
@@ -324,18 +325,17 @@ export const getAllReports = query({
       .query("progressUpdates")
       .order("desc")
       .take(50);
+    
+    // Получаем все донаты один раз
+    const allDonations = await ctx.db.query("donations").collect();
 
     const enriched = await Promise.all(
       reports.map(async (report) => {
         const user = await ctx.db.get(report.userId);
         const challenge = await ctx.db.get(report.challengeId);
         
-        // Получаем донаты для этого конкретного отчёта
-        const donations = await ctx.db
-          .query("donations")
-          .withIndex("by_progress", (q) => q.eq("progressUpdateId", report._id))
-          .collect();
-        
+        // Фильтруем донаты для этого конкретного отчёта
+        const donations = allDonations.filter(d => d.progressUpdateId === report._id);
         const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
         
         return {
@@ -376,17 +376,16 @@ export const getUserReports = query({
       challengeIds.includes(report.challengeId)
     );
     
+    // Получаем все донаты один раз
+    const allDonations = await ctx.db.query("donations").collect();
+    
     const enriched = await Promise.all(
       userReports.map(async (report) => {
         const user = await ctx.db.get(report.userId);
         const challenge = await ctx.db.get(report.challengeId);
         
-        // Получаем донаты для этого конкретного отчёта
-        const donations = await ctx.db
-          .query("donations")
-          .withIndex("by_progress", (q) => q.eq("progressUpdateId", report._id))
-          .collect();
-        
+        // Фильтруем донаты для этого конкретного отчёта
+        const donations = allDonations.filter(d => d.progressUpdateId === report._id);
         const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
         
         return {

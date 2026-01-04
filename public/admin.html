@@ -400,12 +400,12 @@
             <div class="stat-label">Всего отчётов</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">${stats.completedChallenges}</div>
-            <div class="stat-label">Выполнено</div>
+            <div class="stat-value">$${stats.totalDeposits || 0}</div>
+            <div class="stat-label">Пополнено</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">${stats.failedChallenges}</div>
-            <div class="stat-label">Провалено</div>
+            <div class="stat-value">$${stats.totalDonations || 0}</div>
+            <div class="stat-label">Донатов отправлено</div>
           </div>
         `;
       } catch (error) {
@@ -552,9 +552,11 @@
               }[report.verificationStatus] || '<span class="badge badge-pending">На проверке</span>';
               
               const actions = `
-                <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')" title="Подтвердить">✓</button>
-                <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')" title="Отклонить">✗</button>
-                ${report.verificationStatus !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${report._id}', 'pending')" style="background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-top: 4px; width: 100%;" title="Вернуть на проверку">↻</button>` : ''}
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                  <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')" title="Подтвердить">✓</button>
+                  <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')" title="Отклонить">✗</button>
+                  ${report.verificationStatus !== 'pending' ? `<button class="btn btn-secondary" onclick="updateStatus('${report._id}', 'pending')" title="Вернуть на проверку">↻</button>` : ''}
+                </div>
               `;
               
               return `

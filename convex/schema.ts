@@ -39,8 +39,7 @@ export default defineSchema({
     amount: v.number(),
     message: v.optional(v.string()),
   }).index("by_challenge", ["challengeId"])
-    .index("by_donor", ["donorUserId"])
-    .index("by_progress", ["progressUpdateId"]),
+    .index("by_donor", ["donorUserId"]),
 
   progressUpdates: defineTable({
     challengeId: v.id("challenges"),

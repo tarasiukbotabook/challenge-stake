@@ -7,6 +7,16 @@ export const getUsersStats = query({
     const users = await ctx.db.query("users").collect();
     const challenges = await ctx.db.query("challenges").collect();
     const reports = await ctx.db.query("progressUpdates").collect();
+    const transactions = await ctx.db.query("transactions").collect();
+    const donations = await ctx.db.query("donations").collect();
+    
+    // Считаем общую сумму пополнений (deposit)
+    const totalDeposits = transactions
+      .filter(t => t.type === 'deposit')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    // Считаем общую сумму донатов
+    const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
     
     return {
       totalUsers: users.length,
@@ -15,6 +25,8 @@ export const getUsersStats = query({
       activeChallenges: challenges.filter(c => c.status === 'active').length,
       completedChallenges: challenges.filter(c => c.status === 'completed').length,
       failedChallenges: challenges.filter(c => c.status === 'failed').length,
+      totalDeposits: totalDeposits,
+      totalDonations: totalDonations,
     };
   },
 });
