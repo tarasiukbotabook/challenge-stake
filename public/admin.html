@@ -724,23 +724,23 @@
               <tbody>
                 ${users.map(user => {
                   const avatar = user.photoUrl 
-                    ? \`<img src="\${user.photoUrl}" class="user-avatar">\` 
-                    : \`<div class="user-avatar">\${(user.firstName || user.username).charAt(0).toUpperCase()}</div>\`;
+                    ? `<img src="${user.photoUrl}" class="user-avatar">` 
+                    : `<div class="user-avatar">${(user.firstName || user.username).charAt(0).toUpperCase()}</div>`;
                   
                   const date = new Date(user._creationTime).toLocaleDateString('ru-RU');
                   
-                  return \`
+                  return `
                     <tr>
-                      <td>\${avatar} \${user.firstName || ''} \${user.lastName || ''}</td>
-                      <td>@\${user.username}</td>
-                      <td>\${user.telegramId || user.phone || '-'}</td>
-                      <td style="color: var(--accent-gold); font-weight: 600;">\${user.balance}</td>
-                      <td>\${user.challengesCount}</td>
-                      <td>\${user.reportsCount}</td>
-                      <td>\${user.activeChallenges}</td>
-                      <td>\${date}</td>
+                      <td>${avatar} ${user.firstName || ''} ${user.lastName || ''}</td>
+                      <td>@${user.username}</td>
+                      <td>${user.telegramId || user.phone || '-'}</td>
+                      <td style="color: var(--accent-gold); font-weight: 600;">${user.balance}</td>
+                      <td>${user.challengesCount}</td>
+                      <td>${user.reportsCount}</td>
+                      <td>${user.activeChallenges}</td>
+                      <td>${date}</td>
                     </tr>
-                  \`;
+                  `;
                 }).join('')}
               </tbody>
             </table>
@@ -809,7 +809,7 @@
         challengesContent.appendChild(tableContainer);
       }
       
-      tableContainer.innerHTML = \`
+      tableContainer.innerHTML = `
         <table>
           <thead>
             <tr>
@@ -827,8 +827,8 @@
           <tbody>
             \${challenges.map(challenge => {
               const avatar = challenge.photoUrl 
-                ? \`<img src="\${challenge.photoUrl}" class="user-avatar">\` 
-                : \`<div class="user-avatar">\${(challenge.firstName || challenge.username).charAt(0).toUpperCase()}</div>\`;
+                ? `<img src="${challenge.photoUrl}" class="user-avatar">` 
+                : `<div class="user-avatar">${(challenge.firstName || challenge.username).charAt(0).toUpperCase()}</div>`;
               
               const deadline = new Date(challenge.deadline).toLocaleDateString('ru-RU');
               
@@ -838,25 +838,25 @@
                 failed: '<span class="badge badge-fake">✗ Провалена</span>',
               }[challenge.status] || '<span class="badge badge-pending">Активная</span>';
               
-              return \`
+              return `
                 <tr>
-                  <td>\${avatar} @\${challenge.username}</td>
-                  <td>\${challenge.title}</td>
-                  <td>\${challenge.category}</td>
-                  <td style="color: var(--accent-gold); font-weight: 600;">$\${challenge.stakeAmount}</td>
-                  <td style="color: var(--accent-green); font-weight: 600;">$\${challenge.donationsAmount || 0}</td>
-                  <td>\${challenge.reportsCount}</td>
-                  <td>\${statusBadge}</td>
-                  <td>\${deadline}</td>
+                  <td>${avatar} @${challenge.username}</td>
+                  <td>${challenge.title}</td>
+                  <td>${challenge.category}</td>
+                  <td style="color: var(--accent-gold); font-weight: 600;">$${challenge.stakeAmount}</td>
+                  <td style="color: var(--accent-green); font-weight: 600;">$${challenge.donationsAmount || 0}</td>
+                  <td>${challenge.reportsCount}</td>
+                  <td>${statusBadge}</td>
+                  <td>${deadline}</td>
                   <td>
-                    <button class="btn btn-fake" onclick="deleteChallenge('\${challenge._id}')" title="Удалить">🗑️</button>
+                    <button class="btn btn-fake" onclick="deleteChallenge('${challenge._id}')" title="Удалить">🗑️</button>
                   </td>
                 </tr>
-              \`;
+              `;
             }).join('')}
           </tbody>
         </table>
-      \`;
+      `;
     }
 
     async function deleteChallenge(challengeId) {

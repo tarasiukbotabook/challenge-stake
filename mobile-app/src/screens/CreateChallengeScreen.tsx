@@ -31,6 +31,7 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
   const [errorDetails, setErrorDetails] = useState<{ currentBalance?: number; requiredAmount?: number } | null>(null);
   const [toastAnim] = useState(new Animated.Value(-100));
   const [errorToastAnim] = useState(new Animated.Value(-100));
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const createChallenge = useMutation(api.challenges.create);
 
@@ -64,6 +65,13 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
     const amount = parseFloat(stakeAmount);
     if (isNaN(amount) || amount <= 0) {
       setErrorMessage('Введите корректную сумму ставки');
+      showErrorToastNotification();
+      return;
+    }
+
+    // Проверка согласия с условиями
+    if (!agreedToTerms) {
+      setErrorMessage('Необходимо принять условия');
       showErrorToastNotification();
       return;
     }
@@ -266,10 +274,24 @@ export default function CreateChallengeScreen({ navigation, route }: any) {
           </Text>
         </View>
 
+        <View style={styles.termsContainer}>
+          <TouchableOpacity 
+            style={styles.checkbox}
+            onPress={() => setAgreedToTerms(!agreedToTerms)}
+          >
+            <View style={[styles.checkboxBox, agreedToTerms && styles.checkboxBoxChecked]}>
+              {agreedToTerms && <Text style={styles.checkboxCheck}>✓</Text>}
+            </View>
+            <Text style={styles.termsText}>
+              Я принимаю условия и понимаю, что при невыполнении цели ставка будет списана
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity 
-          style={[styles.button, isCreating && styles.buttonDisabled]} 
+          style={[styles.button, (isCreating || !agreedToTerms) && styles.buttonDisabled]} 
           onPress={handleCreate}
-          disabled={isCreating}
+          disabled={isCreating || !agreedToTerms}
         >
           {isCreating ? (
             <ActivityIndicator color="#000" />
@@ -423,6 +445,40 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+  },
+  termsContainer: {
+    marginBottom: spacing.lg,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  checkboxBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  checkboxBoxChecked: {
+    backgroundColor: colors.lime,
+    borderColor: colors.lime,
+  },
+  checkboxCheck: {
+    fontSize: 16,
+    fontWeight: fontWeight.bold,
+    color: colors.textPrimary,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
   },
   button: {
     backgroundColor: colors.lime,
