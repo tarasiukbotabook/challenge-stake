@@ -825,7 +825,7 @@
             </tr>
           </thead>
           <tbody>
-            \${challenges.map(challenge => {
+            ${challenges.map(challenge => {
               const avatar = challenge.photoUrl 
                 ? `<img src="${challenge.photoUrl}" class="user-avatar">` 
                 : `<div class="user-avatar">${(challenge.firstName || challenge.username).charAt(0).toUpperCase()}</div>`;
