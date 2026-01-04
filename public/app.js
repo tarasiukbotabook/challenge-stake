@@ -1511,6 +1511,10 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
       const fakeBtn = reportCard.querySelector('.btn-vote-fake');
       
       if (verifyBtn && fakeBtn) {
+        // Сохраняем текущее состояние ДО изменений
+        const wasVerifyVoted = verifyBtn.classList.contains('voted');
+        const wasFakeVoted = fakeBtn.classList.contains('voted');
+        
         // Получаем текущие счётчики
         const verifyCountSpan = verifyBtn.querySelector('.vote-count');
         const fakeCountSpan = fakeBtn.querySelector('.vote-count');
@@ -1525,8 +1529,10 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
             fakeBtn.classList.remove('voted');
             
             // Обновляем счётчики
-            verifyCount++;
-            if (fakeBtn.classList.contains('voted')) {
+            if (!wasVerifyVoted) {
+              verifyCount++;
+            }
+            if (wasFakeVoted) {
               fakeCount = Math.max(0, fakeCount - 1);
             }
           } else {
@@ -1534,8 +1540,10 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
             verifyBtn.classList.remove('voted');
             
             // Обновляем счётчики
-            fakeCount++;
-            if (verifyBtn.classList.contains('voted')) {
+            if (!wasFakeVoted) {
+              fakeCount++;
+            }
+            if (wasVerifyVoted) {
               verifyCount = Math.max(0, verifyCount - 1);
             }
           }
@@ -1543,10 +1551,14 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
           // Голос убран
           if (voteType === 'verify') {
             verifyBtn.classList.remove('voted');
-            verifyCount = Math.max(0, verifyCount - 1);
+            if (wasVerifyVoted) {
+              verifyCount = Math.max(0, verifyCount - 1);
+            }
           } else {
             fakeBtn.classList.remove('voted');
-            fakeCount = Math.max(0, fakeCount - 1);
+            if (wasFakeVoted) {
+              fakeCount = Math.max(0, fakeCount - 1);
+            }
           }
         }
         
