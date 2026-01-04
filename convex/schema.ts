@@ -69,8 +69,7 @@ export default defineSchema({
   likes: defineTable({
     progressUpdateId: v.id("progressUpdates"),
     userId: v.id("users"),
-  }).index("by_progress", ["progressUpdateId"])
-    .index("by_user", ["userId"])
+  }).index("by_user", ["userId"])
     .index("by_user_and_progress", ["userId", "progressUpdateId"]),
 
   controllers: defineTable({
