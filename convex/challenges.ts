@@ -10,6 +10,7 @@ export const create = mutation({
     stakeAmount: v.number(),
     deadline: v.string(),
     category: v.string(),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -32,6 +33,7 @@ export const create = mutation({
       donationsAmount: 0,
       deadline: args.deadline,
       category: args.category,
+      tags: args.tags || [],
       status: "active",
       verificationType: "social",
     });
@@ -46,6 +48,12 @@ export const create = mutation({
       amount: -args.stakeAmount,
       type: "stake",
       description: "Ставка на челлендж",
+    });
+    
+    // Начисляем рейтинг за создание челленджа (+10 баллов)
+    const currentRating = user.rating || 0;
+    await ctx.db.patch(args.userId, {
+      rating: currentRating + 10,
     });
 
     return { challengeId };
@@ -171,6 +179,7 @@ export const addProgress = mutation({
     content: v.string(),
     socialLink: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const updateId = await ctx.db.insert("progressUpdates", {
@@ -179,6 +188,7 @@ export const addProgress = mutation({
       content: args.content,
       socialLink: args.socialLink,
       imageUrl: args.imageUrl,
+      tags: args.tags || [],
       likesCount: 0,
       verifyVotes: 0,
       fakeVotes: 0,

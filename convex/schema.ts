@@ -14,6 +14,7 @@ export default defineSchema({
     website: v.optional(v.string()),
     balance: v.number(),
     premium: v.boolean(),
+    rating: v.optional(v.number()), // Рейтинг пользователя
   }).index("by_email", ["email"])
     .index("by_telegram", ["telegramId"]),
 
@@ -27,6 +28,7 @@ export default defineSchema({
     deadline: v.string(),
     status: v.string(), // 'active', 'completed', 'failed'
     category: v.string(),
+    tags: v.optional(v.array(v.string())), // Теги
     verificationType: v.string(),
     completedAt: v.optional(v.string()),
   }).index("by_user", ["userId"])
@@ -47,6 +49,7 @@ export default defineSchema({
     content: v.string(),
     imageUrl: v.optional(v.string()),
     socialLink: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())), // Теги
     likesCount: v.optional(v.number()),
     verificationStatus: v.optional(v.string()), // 'pending', 'verified', 'fake'
     verifyVotes: v.optional(v.number()), // Количество голосов "подтверждён"

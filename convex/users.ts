@@ -35,6 +35,7 @@ export const registerTelegram = mutation({
         photoUrl: args.photoUrl,
         balance: 1000, // Стартовый бонус
         premium: false,
+        rating: 0, // Начальный рейтинг
       });
 
       console.log('User created successfully:', userId);
@@ -47,6 +48,7 @@ export const registerTelegram = mutation({
         photoUrl: args.photoUrl,
         balance: 1000,
         premium: false,
+        rating: 0,
       };
     } catch (error) {
       console.error('Error creating user:', error);
@@ -194,6 +196,7 @@ export const getUserStats = query({
       photoUrl: user.photoUrl || "",
       bio: user.bio || "",
       website: user.website || "",
+      rating: user.rating || 0,
     };
   },
 });

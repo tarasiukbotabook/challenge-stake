@@ -95,15 +95,58 @@ export const getAllReportsForModeration = query({
 export const updateReportStatus = mutation({
   args: {
     reportId: v.id("progressUpdates"),
-    status: v.string(), // 'verified' or 'fake'
+    status: v.string(), // 'verified', 'fake', or 'pending'
   },
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
     if (!report) throw new Error("Отчёт не найден");
     
+    const user = await ctx.db.get(report.userId);
+    if (!user) throw new Error("Пользователь не найден");
+    
+    const oldStatus = report.verificationStatus || "pending";
+    const newStatus = args.status;
+    
+    // Обновляем статус отчёта
     await ctx.db.patch(args.reportId, {
-      verificationStatus: args.status,
+      verificationStatus: newStatus,
     });
+    
+    // Управление рейтингом
+    let ratingChange = 0;
+    const currentRating = user.rating || 0;
+    
+    // Если меняем с pending на verified - добавляем баллы
+    if (oldStatus === "pending" && newStatus === "verified") {
+      ratingChange = 5; // +5 за подтверждённый отчёт
+    }
+    // Если меняем с pending на fake - снимаем баллы
+    else if (oldStatus === "pending" && newStatus === "fake") {
+      ratingChange = -10; // -10 за фейковый отчёт (в 2 раза больше)
+    }
+    // Если меняем с verified на fake - снимаем баллы и убираем ранее начисленные
+    else if (oldStatus === "verified" && newStatus === "fake") {
+      ratingChange = -15; // -5 (убираем начисленные) + -10 (штраф)
+    }
+    // Если меняем с fake на verified - добавляем баллы и убираем штраф
+    else if (oldStatus === "fake" && newStatus === "verified") {
+      ratingChange = 15; // +10 (убираем штраф) + +5 (награда)
+    }
+    // Если возвращаем на pending с verified - убираем начисленные баллы
+    else if (oldStatus === "verified" && newStatus === "pending") {
+      ratingChange = -5;
+    }
+    // Если возвращаем на pending с fake - убираем штраф
+    else if (oldStatus === "fake" && newStatus === "pending") {
+      ratingChange = 10;
+    }
+    
+    // Обновляем рейтинг (не даём уйти в минус)
+    if (ratingChange !== 0) {
+      await ctx.db.patch(report.userId, {
+        rating: Math.max(0, currentRating + ratingChange),
+      });
+    }
     
     return { success: true };
   },

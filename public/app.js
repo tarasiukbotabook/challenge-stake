@@ -591,6 +591,10 @@ async function handleCreateChallenge(e) {
     }
   }
 
+  // Парсим теги
+  const tagsInput = document.getElementById('challenge-tags').value.trim();
+  const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
   const challengeData = {
     userId: currentUser.id,
     title: document.getElementById('challenge-title').value,
@@ -598,6 +602,7 @@ async function handleCreateChallenge(e) {
     category: document.getElementById('challenge-category').value,
     stakeAmount: parseFloat(document.getElementById('challenge-stake').value),
     deadline: document.getElementById('challenge-deadline').value,
+    tags: tags,
     imageUrl
   };
 
@@ -935,6 +940,10 @@ async function handleAddReportPage(e) {
   const socialLink = document.getElementById('report-link-page').value || undefined;
   const photoFile = document.getElementById('report-photo-page').files[0];
   
+  // Парсим теги
+  const tagsInput = document.getElementById('report-tags-page').value.trim();
+  const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+  
   let imageUrl = undefined;
   
   // Если есть фото, конвертируем в base64
@@ -959,7 +968,8 @@ async function handleAddReportPage(e) {
       userId: currentUser.id,
       content,
       socialLink,
-      imageUrl
+      imageUrl,
+      tags
     });
     
     showToast('Отчёт опубликован!', 'success', 'Отлично! 🎉');
@@ -1300,6 +1310,13 @@ window.showUserProfile = async function(userId) {
         <div class="profile-avatar">${avatarHtml}</div>
         <h2 class="profile-username" onclick="shareProfile('${user.username}')" style="cursor: pointer;">@${user.username}</h2>
         ${user.firstName ? `<div class="profile-name">${user.firstName}</div>` : ''}
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span style="font-size: 18px; font-weight: 600; color: var(--accent-gold);">${stats.rating || 0}</span>
+          <span style="font-size: 14px; opacity: 0.7;">рейтинг</span>
+        </div>
         ${bioSection}
         ${balanceSection}
       </div>
