@@ -7,6 +7,7 @@ import { SettingsIcon, StarIcon } from '../components/Icons';
 import TopBar from '../components/TopBar';
 import ReportCard from '../components/ReportCard';
 import ChallengeCard from '../components/ChallengeCard';
+import * as Clipboard from 'expo-clipboard';
 
 export default function ProfileScreen({ navigation, route, userId }: any) {
   const [activeTab, setActiveTab] = useState<'challenges' | 'reports'>('challenges');
@@ -18,6 +19,8 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
   const [donateMessage, setDonateMessage] = useState('');
   const [isDonating, setIsDonating] = useState(false);
   const [toastAnim] = useState(new Animated.Value(-100));
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [copiedToastAnim] = useState(new Animated.Value(-100));
   
   // Загрузка реальных данных пользователя
   const userStats = useQuery(api.users.getUserStats, userId ? { userId } : 'skip');
@@ -38,6 +41,30 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  };
+
+  const handleCopyProfileLink = async () => {
+    const profileLink = `https://pofactu.app/profile/${mockUser.username}`;
+    await Clipboard.setStringAsync(profileLink);
+    
+    // Показываем toast уведомление
+    setShowCopiedToast(true);
+    
+    Animated.sequence([
+      Animated.timing(copiedToastAnim, {
+        toValue: 60,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(copiedToastAnim, {
+        toValue: -100,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowCopiedToast(false);
+    });
   };
 
   const handleDonatePress = (report: any) => {
@@ -172,7 +199,7 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
           
           {/* Информация справа */}
           <View style={styles.profileInfo}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleCopyProfileLink}>
               <Text style={styles.profileUsername}>@{mockUser.username}</Text>
             </TouchableOpacity>
             
@@ -368,6 +395,21 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
         <View style={styles.successToast}>
           <Text style={styles.successIcon}>💚</Text>
           <Text style={styles.successText}>Донат ${donatedAmount} отправлен!</Text>
+        </View>
+      </Animated.View>
+    )}
+    
+    {/* Copied Toast Notification */}
+    {showCopiedToast && (
+      <Animated.View 
+        style={[
+          styles.successOverlay,
+          { transform: [{ translateY: copiedToastAnim }] }
+        ]}
+      >
+        <View style={styles.successToast}>
+          <Text style={styles.successIcon}>🔗</Text>
+          <Text style={styles.successText}>Ссылка скопирована!</Text>
         </View>
       </Animated.View>
     )}
