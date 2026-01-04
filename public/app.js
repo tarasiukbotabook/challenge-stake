@@ -1280,23 +1280,22 @@ window.showUserProfile = async function(userId) {
       ` : ''}
       
       <div style="padding: 0;">
-        <h3 style="margin-bottom: 0; font-size: 18px; padding: 16px; opacity: 0.8;">Челленджи</h3>
-        <div id="user-challenges-list"></div>
+        <!-- Tabs -->
+        <div class="tabs" style="padding: 16px; background: rgba(26, 31, 38, 0.3);">
+          <button class="tab-btn active" onclick="showProfileTab('${userId}', 'challenges')">
+            Челленджи
+          </button>
+          <button class="tab-btn" onclick="showProfileTab('${userId}', 'reports')">
+            Отчёты
+          </button>
+        </div>
+        
+        <div id="profile-content-area"></div>
       </div>
     `;
     
-    // Отображаем челленджи
-    const challengesList = document.getElementById('user-challenges-list');
-    if (challenges.length === 0) {
-      challengesList.innerHTML = `
-        <div class="empty-state">
-          <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;"></div>
-          <div class="empty-text">Пока нет челленджей</div>
-        </div>
-      `;
-    } else {
-      displayChallenges(challenges, isOwnProfile, challengesList);
-    }
+    // Загружаем челленджи по умолчанию
+    await showProfileTab(userId, 'challenges');
     
   } catch (error) {
     console.error('Ошибка загрузки профиля:', error);
@@ -1913,5 +1912,137 @@ window.showChallengeDonations = async function(challengeId) {
   } catch (error) {
     console.error('Ошибка загрузки донатов:', error);
     showToast('Ошибка загрузки донатов', 'error');
+  }
+}
+
+
+// Переключение вкладок в профиле
+window.showProfileTab = async function(userId, tab) {
+  const isOwnProfile = currentUser && userId === currentUser.id;
+  
+  // Обновляем активную вкладку
+  const tabs = document.querySelectorAll('#user-profile-screen .tab-btn');
+  tabs.forEach(t => t.classList.remove('active'));
+  
+  if (tab === 'challenges') {
+    tabs[0]?.classList.add('active');
+  } else {
+    tabs[1]?.classList.add('active');
+  }
+  
+  const contentArea = document.getElementById('profile-content-area');
+  
+  if (!contentArea) {
+    console.error('profile-content-area not found');
+    return;
+  }
+  
+  // Показываем загрузку
+  contentArea.innerHTML = `
+    <div style="text-align: center; padding: 40px; opacity: 0.5;">
+      <div style="font-size: 32px; margin-bottom: 12px;"></div>
+      <div>Загрузка...</div>
+    </div>
+  `;
+  
+  try {
+    if (tab === 'challenges') {
+      // Загружаем челленджи
+      const challenges = await client.query("challenges:getMy", { userId });
+      
+      if (challenges.length === 0) {
+        contentArea.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;"></div>
+            <div class="empty-text">Пока нет челленджей</div>
+          </div>
+        `;
+      } else {
+        contentArea.innerHTML = '<div id="user-challenges-list" style="padding: 8px;"></div>';
+        const challengesList = document.getElementById('user-challenges-list');
+        displayChallenges(challenges, isOwnProfile, challengesList);
+      }
+    } else if (tab === 'reports') {
+      // Загружаем отчёты пользователя
+      const reports = await client.query("challenges:getUserReports", { userId });
+      
+      if (reports.length === 0) {
+        contentArea.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;"></div>
+            <div class="empty-text">Пока нет отчётов</div>
+          </div>
+        `;
+      } else {
+        // Отображаем отчёты (используем тот же формат что и в ленте)
+        contentArea.innerHTML = '<div id="user-reports-list" style="padding: 8px; display: flex; flex-direction: column; gap: 8px;"></div>';
+        const reportsList = document.getElementById('user-reports-list');
+        
+        reportsList.innerHTML = reports.map(report => {
+          const date = new Date(report._creationTime);
+          const dateStr = date.toLocaleDateString('ru-RU');
+          
+          const avatarHtml = report.photoUrl 
+            ? `<img src="${report.photoUrl}" alt="${report.username}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+            : (report.firstName || report.username).charAt(0).toUpperCase();
+          
+          const canDonate = currentUser && report.userId !== currentUser.id;
+          const donationsAmount = report.donationsAmount || 0;
+          const donationsText = donationsAmount > 0 
+            ? `<div style="font-size: 12px; opacity: 0.8; cursor: pointer; color: #10b981;" onclick="showReportDonations('${report._id}', '${report.userId}')">💰 Собрано: $${donationsAmount}</div>`
+            : `<div style="font-size: 12px; opacity: 0.6;">Собрано: $0</div>`;
+          
+          return `
+            <div class="report-card" data-report-id="${report._id}">
+              <div class="report-header">
+                <div class="report-user">
+                  <div class="report-avatar">${avatarHtml}</div>
+                  <div class="report-user-info">
+                    <div class="report-username" onclick="showUserProfile('${report.userId}')">@${report.username}</div>
+                    <div class="report-challenge">${report.challengeTitle}</div>
+                    <div class="report-date">${dateStr}</div>
+                  </div>
+                </div>
+                <button class="btn-menu" onclick="showReportMenu('${report._id}', '${report.username}')" title="Поделиться">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="12" cy="5" r="1"></circle>
+                    <circle cx="12" cy="19" r="1"></circle>
+                  </svg>
+                </button>
+              </div>
+              <div class="report-content">${report.content}</div>
+              ${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : ''}
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <button class="btn-like" onclick="toggleLike('${report._id}', this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span class="like-count">${report.likesCount || 0}</span>
+                  </button>
+                  ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
+                  ${donationsText}
+                </div>
+                ${canDonate ? `<button class="btn-donate" onclick="showDonateModalFromReport('${report.challengeId}', '${report._id}', '${report.username}')">Поддержать</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+    
+    if (tg) {
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки:', error);
+    contentArea.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;"></div>
+        <div class="empty-text">Ошибка загрузки</div>
+        <p style="opacity: 0.6; margin-top: 8px;">${error.message}</p>
+      </div>
+    `;
   }
 }

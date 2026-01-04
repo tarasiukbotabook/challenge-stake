@@ -348,6 +348,55 @@ export const getAllReports = query({
   },
 });
 
+export const getUserReports = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    // Получаем все челленджи пользователя
+    const userChallenges = await ctx.db
+      .query("challenges")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    const challengeIds = userChallenges.map(c => c._id);
+    
+    // Получаем все отчёты по этим челленджам
+    const allReports = await ctx.db
+      .query("progressUpdates")
+      .order("desc")
+      .collect();
+    
+    const userReports = allReports.filter(report => 
+      challengeIds.includes(report.challengeId)
+    );
+    
+    const enriched = await Promise.all(
+      userReports.map(async (report) => {
+        const user = await ctx.db.get(report.userId);
+        const challenge = await ctx.db.get(report.challengeId);
+        
+        // Получаем донаты для этого конкретного отчёта
+        const donations = await ctx.db
+          .query("donations")
+          .withIndex("by_progress", (q) => q.eq("progressUpdateId", report._id))
+          .collect();
+        
+        const totalDonations = donations.reduce((sum, d) => sum + d.amount, 0);
+        
+        return {
+          ...report,
+          username: user?.username || "Unknown",
+          firstName: user?.firstName || "",
+          photoUrl: user?.photoUrl || "",
+          challengeTitle: challenge?.title || "Unknown",
+          donationsAmount: totalDonations,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
 
 export const toggleLike = mutation({
   args: {
