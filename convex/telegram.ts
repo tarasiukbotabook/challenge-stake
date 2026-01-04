@@ -1,15 +1,15 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 
-// Telegram Bot Token - нужно добавить в environment variables
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-
 export const sendNotification = action({
   args: {
     telegramId: v.string(),
     message: v.string(),
   },
   handler: async (ctx, args) => {
+    // Получаем токен из environment variables Convex
+    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    
     if (!TELEGRAM_BOT_TOKEN) {
       console.error("TELEGRAM_BOT_TOKEN not set");
       return { success: false, error: "Bot token not configured" };
