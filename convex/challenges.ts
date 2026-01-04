@@ -424,8 +424,13 @@ export const voteReport = mutation({
     reason: v.optional(v.string()), // Причина для 'fake'
   },
   handler: async (ctx, args) => {
+    console.log('=== voteReport called ===');
+    console.log('args:', args);
+    
     const report = await ctx.db.get(args.progressUpdateId);
     if (!report) throw new Error("Отчёт не найден");
+    
+    console.log('report found:', report._id);
     
     // Проверяем, голосовал ли уже пользователь
     const existingVote = await ctx.db
@@ -454,16 +459,10 @@ export const voteReport = mutation({
         return { voted: false, voteType: null };
       } else {
         // Меняем тип голоса
-        const patchData: any = {
+        await ctx.db.patch(existingVote._id, {
           voteType: args.voteType,
-        };
-        
-        // Добавляем reason только если он есть
-        if (args.reason) {
-          patchData.reason = args.reason;
-        }
-        
-        await ctx.db.patch(existingVote._id, patchData);
+          ...(args.reason && { reason: args.reason }),
+        });
         
         // Обновляем счётчики
         if (args.voteType === 'verify') {
@@ -482,18 +481,12 @@ export const voteReport = mutation({
       }
     } else {
       // Добавляем новый голос
-      const voteData: any = {
+      await ctx.db.insert("reportVotes", {
         progressUpdateId: args.progressUpdateId,
         userId: args.userId,
         voteType: args.voteType,
-      };
-      
-      // Добавляем reason только если он есть
-      if (args.reason) {
-        voteData.reason = args.reason;
-      }
-      
-      await ctx.db.insert("reportVotes", voteData);
+        ...(args.reason && { reason: args.reason }),
+      });
       
       // Увеличиваем счётчик
       if (args.voteType === 'verify') {

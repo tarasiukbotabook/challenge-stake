@@ -1407,7 +1407,7 @@ window.toggleReportVote = async function(reportId, voteType, buttonElement) {
   }
   
   // Для "verify" голосуем сразу
-  await submitReportVote(reportId, voteType, buttonElement, null);
+  await submitReportVote(reportId, voteType, buttonElement, undefined);
 }
 
 // Показать модальное окно с причиной для "Не верю"
@@ -1488,13 +1488,28 @@ window.showFakeReasonModal = function(reportId, buttonElement) {
 
 // Отправить голос за отчёт
 async function submitReportVote(reportId, voteType, buttonElement, reason) {
+  console.log('=== submitReportVote called ===');
+  console.log('reportId:', reportId);
+  console.log('voteType:', voteType);
+  console.log('reason:', reason);
+  console.log('currentUser:', currentUser);
+  console.log('currentUser.id:', currentUser?.id);
+  
   try {
-    const result = await client.mutation("challenges:voteReport", {
+    const mutationArgs: any = {
       progressUpdateId: reportId,
       userId: currentUser.id,
       voteType: voteType,
-      reason: reason
-    });
+    };
+    
+    // Добавляем reason только если он есть
+    if (reason !== undefined && reason !== null) {
+      mutationArgs.reason = reason;
+    }
+    
+    console.log('mutation args:', mutationArgs);
+    
+    const result = await client.mutation("challenges:voteReport", mutationArgs);
     
     // Находим обе кнопки голосования для этого отчёта
     const reportCard = buttonElement.closest('.report-card');
