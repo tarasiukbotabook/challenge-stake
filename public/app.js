@@ -1488,13 +1488,6 @@ window.showFakeReasonModal = function(reportId, buttonElement) {
 
 // Отправить голос за отчёт
 async function submitReportVote(reportId, voteType, buttonElement, reason) {
-  console.log('=== submitReportVote called ===');
-  console.log('reportId:', reportId);
-  console.log('voteType:', voteType);
-  console.log('reason:', reason);
-  console.log('currentUser:', currentUser);
-  console.log('currentUser.id:', currentUser?.id);
-  
   try {
     // Формируем аргументы для mutation
     const mutationArgs = {
@@ -1508,9 +1501,6 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
       mutationArgs.reason = reason;
     }
     
-    console.log('mutation args:', mutationArgs);
-    console.log('mutation args keys:', Object.keys(mutationArgs));
-    
     const result = await client.mutation("challenges:voteReport", mutationArgs);
     
     // Находим обе кнопки голосования для этого отчёта
@@ -1521,41 +1511,52 @@ async function submitReportVote(reportId, voteType, buttonElement, reason) {
       const fakeBtn = reportCard.querySelector('.btn-vote-fake');
       
       if (verifyBtn && fakeBtn) {
+        // Получаем текущие счётчики
+        const verifyCountSpan = verifyBtn.querySelector('.vote-count');
+        const fakeCountSpan = fakeBtn.querySelector('.vote-count');
+        
+        let verifyCount = parseInt(verifyCountSpan.textContent) || 0;
+        let fakeCount = parseInt(fakeCountSpan.textContent) || 0;
+        
         if (result.voted) {
           // Голос добавлен или изменён
           if (result.voteType === 'verify') {
             verifyBtn.classList.add('voted');
             fakeBtn.classList.remove('voted');
+            
+            // Обновляем счётчики
+            verifyCount++;
+            if (fakeBtn.classList.contains('voted')) {
+              fakeCount = Math.max(0, fakeCount - 1);
+            }
           } else {
             fakeBtn.classList.add('voted');
             verifyBtn.classList.remove('voted');
+            
+            // Обновляем счётчики
+            fakeCount++;
+            if (verifyBtn.classList.contains('voted')) {
+              verifyCount = Math.max(0, verifyCount - 1);
+            }
           }
         } else {
           // Голос убран
-          verifyBtn.classList.remove('voted');
-          fakeBtn.classList.remove('voted');
+          if (voteType === 'verify') {
+            verifyBtn.classList.remove('voted');
+            verifyCount = Math.max(0, verifyCount - 1);
+          } else {
+            fakeBtn.classList.remove('voted');
+            fakeCount = Math.max(0, fakeCount - 1);
+          }
         }
+        
+        // Обновляем отображение счётчиков
+        verifyCountSpan.textContent = verifyCount;
+        fakeCountSpan.textContent = fakeCount;
       }
     }
     
-    showToast(result.voted ? 'Голос учтён' : 'Голос отменён', result.voted ? 'success' : 'info');
-    
-    // Перезагружаем отчёты чтобы получить актуальные счётчики
-    const feedScreen = document.getElementById('feed-screen');
-    if (feedScreen && feedScreen.classList.contains('active')) {
-      await showFeedReports();
-    }
-    
-    // Если мы в профиле, обновляем вкладку отчётов
-    const profileScreen = document.getElementById('user-profile-screen');
-    if (profileScreen && profileScreen.classList.contains('active')) {
-      const activeTab = document.querySelector('#user-profile-screen .tab-btn.active');
-      if (activeTab && activeTab.textContent.includes('Отчёты')) {
-        const userId = currentUser.id;
-        await showProfileTab(userId, 'reports');
-      }
-    }
-    
+    // Только haptic feedback, без toast и перезагрузки
     if (tg) {
       tg.HapticFeedback.impactOccurred('light');
     }
