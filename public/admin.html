@@ -339,7 +339,9 @@
           style="width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;"
         >
       </div>
-      <div class="loading">Загрузка пользователей...</div>
+      <div id="users-table-container">
+        <div class="loading">Загрузка пользователей...</div>
+      </div>
     </div>
 
     <div id="challenges-content" class="content">
@@ -476,7 +478,8 @@
       try {
         const users = await client.query("admin:getAllUsers", {});
         
-        document.getElementById('users-content').innerHTML = `
+        const tableContainer = document.getElementById('users-table-container');
+        tableContainer.innerHTML = `
           <table>
             <thead>
               <tr>
@@ -696,18 +699,14 @@
         try {
           const users = await client.query("admin:searchUsers", { searchQuery: query });
           
-          const usersContent = document.getElementById('users-content');
-          const searchBox = usersContent.querySelector('#user-search').parentElement;
-          
-          usersContent.innerHTML = '';
-          usersContent.appendChild(searchBox);
+          const tableContainer = document.getElementById('users-table-container');
           
           if (users.length === 0) {
-            usersContent.innerHTML += '<div class="loading">Пользователи не найдены</div>';
+            tableContainer.innerHTML = '<div class="loading">Пользователи не найдены</div>';
             return;
           }
           
-          usersContent.innerHTML += `
+          tableContainer.innerHTML = `
             <table>
               <thead>
                 <tr>
