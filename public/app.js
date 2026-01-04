@@ -1393,40 +1393,6 @@ window.showMyProfile = function() {
   }
 }
 
-// Лайкнуть отчёт
-window.toggleLike = async function(reportId, buttonElement) {
-  if (!currentUser) {
-    showToast('Необходима авторизация', 'error');
-    return;
-  }
-  
-  try {
-    const result = await client.mutation("challenges:toggleLike", {
-      progressUpdateId: reportId,
-      userId: currentUser.id
-    });
-    
-    // Обновляем UI
-    const likeCount = buttonElement.querySelector('.like-count');
-    const currentCount = parseInt(likeCount.textContent) || 0;
-    
-    if (result.liked) {
-      buttonElement.classList.add('liked');
-      likeCount.textContent = currentCount + 1;
-    } else {
-      buttonElement.classList.remove('liked');
-      likeCount.textContent = Math.max(0, currentCount - 1);
-    }
-    
-    if (tg) {
-      tg.HapticFeedback.impactOccurred('light');
-    }
-  } catch (error) {
-    console.error('Ошибка лайка:', error);
-    showToast('Ошибка', 'error');
-  }
-}
-
 // Голосовать за отчёт (подтверждён/фейк)
 window.toggleReportVote = async function(reportId, voteType, buttonElement) {
   if (!currentUser) {
