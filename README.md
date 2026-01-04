@@ -2,12 +2,18 @@
 
 <div align="center">
 
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/tarasiukbotabook/challenge-stake/ci.yml?style=for-the-badge&logo=github)
+![GitHub release](https://img.shields.io/github/v/release/tarasiukbotabook/challenge-stake?style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/tarasiukbotabook/challenge-stake?style=for-the-badge&logo=github)
+![License](https://img.shields.io/github/license/tarasiukbotabook/challenge-stake?style=for-the-badge)
+
 ![Challenge Stake](https://img.shields.io/badge/Challenge-Stake-blueviolet?style=for-the-badge)
 ![Telegram](https://img.shields.io/badge/Telegram-Mini%20App-blue?style=for-the-badge&logo=telegram)
 ![Convex](https://img.shields.io/badge/Convex-Serverless-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Достигай целей публично с денежными ставками в Telegram!**
+
+[🚀 Открыть в Telegram](https://t.me/challenge_stake_bot) • [📖 Документация](./CONTRIBUTING.md) • [🐛 Сообщить о баге](https://github.com/tarasiukbotabook/challenge-stake/issues/new?template=bug_report.md)
 
 </div>
 
@@ -165,7 +171,7 @@ Challenge Stake - это Telegram Mini App для публичных целей 
 
 ## 🤝 Вклад в проект
 
-Мы приветствуем вклад в проект! 
+Мы приветствуем вклад в проект! Прочитайте [CONTRIBUTING.md](./CONTRIBUTING.md) для деталей.
 
 1. Fork репозиторий
 2. Создайте ветку (`git checkout -b feature/amazing`)
@@ -177,12 +183,20 @@ Challenge Stake - это Telegram Mini App для публичных целей 
 
 MIT License - см. [LICENSE](LICENSE)
 
+## 🔒 Безопасность
+
+Если вы обнаружили уязвимость, пожалуйста, прочитайте [SECURITY.md](./SECURITY.md).
+
+## 📋 Changelog
+
+Все изменения документируются в [CHANGELOG.md](./CHANGELOG.md).
+
 ## 🌟 Поддержать проект
 
 Если проект вам понравился:
 - ⭐ Поставьте звезду на GitHub
-- 🐛 Сообщите о багах
-- 💡 Предложите новые фичи
+- 🐛 [Сообщите о багах](https://github.com/tarasiukbotabook/challenge-stake/issues/new?template=bug_report.md)
+- 💡 [Предложите новые фичи](https://github.com/tarasiukbotabook/challenge-stake/issues/new?template=feature_request.md)
 - 📢 Поделитесь с друзьями
 
 ---
