@@ -50,8 +50,18 @@ export default defineSchema({
     socialLink: v.optional(v.string()),
     likesCount: v.optional(v.number()),
     verificationStatus: v.optional(v.string()), // 'pending', 'verified', 'fake'
+    verifyVotes: v.optional(v.number()), // Количество голосов "подтверждён"
+    fakeVotes: v.optional(v.number()), // Количество голосов "фейк"
   }).index("by_challenge", ["challengeId"])
     .index("by_status", ["verificationStatus"]),
+  
+  reportVotes: defineTable({
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+    voteType: v.string(), // 'verify' or 'fake'
+  }).index("by_report", ["progressUpdateId"])
+    .index("by_user", ["userId"])
+    .index("by_user_and_report", ["userId", "progressUpdateId"]),
   
   likes: defineTable({
     progressUpdateId: v.id("progressUpdates"),

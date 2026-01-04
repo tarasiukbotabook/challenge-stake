@@ -246,6 +246,26 @@
     </div>
 
     <div id="reports-content" class="content">
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+        <div style="flex: 1;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Фильтр по статусу:</label>
+          <select id="status-filter" onchange="filterReports()" style="width: 100%; padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;">
+            <option value="all">Все отчёты</option>
+            <option value="pending">На проверке</option>
+            <option value="verified">Подтверждённые</option>
+            <option value="fake">Fake</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Сортировка:</label>
+          <select id="sort-by" onchange="filterReports()" style="width: 100%; padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;">
+            <option value="date">По дате (новые)</option>
+            <option value="likes">По лайкам</option>
+            <option value="verify">По голосам "подтверждён"</option>
+            <option value="fake">По голосам "фейк"</option>
+          </select>
+        </div>
+      </div>
       <div class="loading">Загрузка отчётов...</div>
     </div>
   </div>
@@ -292,6 +312,8 @@
       event.target.classList.add('active');
       document.getElementById(`${tab}-content`).classList.add('active');
     }
+
+    let allReports = []; // Храним все отчёты для фильтрации
 
     async function loadStats() {
       try {
@@ -378,61 +400,118 @@
 
     async function loadReports() {
       try {
-        const reports = await client.query("admin:getAllReportsForModeration", {});
-        
-        document.getElementById('reports-content').innerHTML = `
-          <table>
-            <thead>
-              <tr>
-                <th>Пользователь</th>
-                <th>Челлендж</th>
-                <th>Контент</th>
-                <th>Фото</th>
-                <th>Лайки</th>
-                <th>Статус</th>
-                <th>Дата</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${reports.map(report => {
-                const avatar = report.photoUrl 
-                  ? `<img src="${report.photoUrl}" class="user-avatar">` 
-                  : `<div class="user-avatar">${(report.firstName || report.username).charAt(0).toUpperCase()}</div>`;
-                
-                const date = new Date(report._creationTime).toLocaleDateString('ru-RU');
-                
-                const statusBadge = {
-                  pending: '<span class="badge badge-pending">На проверке</span>',
-                  verified: '<span class="badge badge-verified">✓ Подтверждён</span>',
-                  fake: '<span class="badge badge-fake">✗ Fake</span>',
-                }[report.verificationStatus] || '<span class="badge badge-pending">На проверке</span>';
-                
-                const actions = report.verificationStatus === 'pending' ? `
-                  <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')">✓ Подтвердить</button>
-                  <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')">✗ Fake</button>
-                ` : '-';
-                
-                return `
-                  <tr>
-                    <td>${avatar} @${report.username}</td>
-                    <td>${report.challengeTitle}</td>
-                    <td><div class="report-content">${report.content}</div></td>
-                    <td>${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : '-'}</td>
-                    <td>${report.likesCount || 0}</td>
-                    <td>${statusBadge}</td>
-                    <td>${date}</td>
-                    <td>${actions}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        `;
+        allReports = await client.query("admin:getAllReportsForModeration", {});
+        filterReports(); // Применяем фильтры
       } catch (error) {
         console.error('Error loading reports:', error);
-        document.getElementById('reports-content').innerHTML = '<div class="loading">Ошибка загрузки</div>';
+        const reportsContent = document.getElementById('reports-content');
+        const loadingDiv = reportsContent.querySelector('.loading');
+        if (loadingDiv) {
+          loadingDiv.textContent = 'Ошибка загрузки';
+        }
       }
+    }
+
+    function filterReports() {
+      const statusFilter = document.getElementById('status-filter').value;
+      const sortBy = document.getElementById('sort-by').value;
+      
+      // Фильтруем отчёты
+      let filtered = allReports;
+      if (statusFilter !== 'all') {
+        filtered = allReports.filter(r => (r.verificationStatus || 'pending') === statusFilter);
+      }
+      
+      // Сортируем отчёты
+      filtered = [...filtered]; // Копируем массив
+      switch (sortBy) {
+        case 'likes':
+          filtered.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+          break;
+        case 'verify':
+          filtered.sort((a, b) => (b.verifyVotes || 0) - (a.verifyVotes || 0));
+          break;
+        case 'fake':
+          filtered.sort((a, b) => (b.fakeVotes || 0) - (a.fakeVotes || 0));
+          break;
+        case 'date':
+        default:
+          filtered.sort((a, b) => b._creationTime - a._creationTime);
+          break;
+      }
+      
+      // Отображаем отчёты
+      displayReports(filtered);
+    }
+
+    function displayReports(reports) {
+      const reportsContent = document.getElementById('reports-content');
+      const loadingDiv = reportsContent.querySelector('.loading');
+      
+      if (loadingDiv) {
+        loadingDiv.remove();
+      }
+      
+      let tableContainer = reportsContent.querySelector('.table-container');
+      if (!tableContainer) {
+        tableContainer = document.createElement('div');
+        tableContainer.className = 'table-container';
+        reportsContent.appendChild(tableContainer);
+      }
+      
+      tableContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Пользователь</th>
+              <th>Челлендж</th>
+              <th>Контент</th>
+              <th>Фото</th>
+              <th>Лайки</th>
+              <th>✓ Голоса</th>
+              <th>✗ Голоса</th>
+              <th>Статус</th>
+              <th>Дата</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reports.map(report => {
+              const avatar = report.photoUrl 
+                ? `<img src="${report.photoUrl}" class="user-avatar">` 
+                : `<div class="user-avatar">${(report.firstName || report.username).charAt(0).toUpperCase()}</div>`;
+              
+              const date = new Date(report._creationTime).toLocaleDateString('ru-RU');
+              
+              const statusBadge = {
+                pending: '<span class="badge badge-pending">На проверке</span>',
+                verified: '<span class="badge badge-verified">✓ Подтверждён</span>',
+                fake: '<span class="badge badge-fake">✗ Fake</span>',
+              }[report.verificationStatus] || '<span class="badge badge-pending">На проверке</span>';
+              
+              const actions = report.verificationStatus === 'pending' ? `
+                <button class="btn btn-verify" onclick="updateStatus('${report._id}', 'verified')">✓ Подтвердить</button>
+                <button class="btn btn-fake" onclick="updateStatus('${report._id}', 'fake')">✗ Fake</button>
+              ` : '-';
+              
+              return `
+                <tr>
+                  <td>${avatar} @${report.username}</td>
+                  <td>${report.challengeTitle}</td>
+                  <td><div class="report-content">${report.content}</div></td>
+                  <td>${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : '-'}</td>
+                  <td>${report.likesCount || 0}</td>
+                  <td style="color: var(--accent-green); font-weight: 600;">${report.verifyVotes || 0}</td>
+                  <td style="color: #ef4444; font-weight: 600;">${report.fakeVotes || 0}</td>
+                  <td>${statusBadge}</td>
+                  <td>${date}</td>
+                  <td>${actions}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
     async function updateStatus(reportId, status) {

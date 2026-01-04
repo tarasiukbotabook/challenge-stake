@@ -1103,6 +1103,18 @@ window.showFeedReports = async function() {
                   </svg>
                   <span class="like-count">${report.likesCount || 0}</span>
                 </button>
+                <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждён">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                  <span class="vote-count">${report.verifyVotes || 0}</span>
+                </button>
+                <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Фейк">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                  <span class="vote-count">${report.fakeVotes || 0}</span>
+                </button>
                 ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
                 ${donationsText}
               </div>
@@ -1354,6 +1366,79 @@ window.toggleLike = async function(reportId, buttonElement) {
     }
   } catch (error) {
     console.error('Ошибка лайка:', error);
+    showToast('Ошибка', 'error');
+  }
+}
+
+// Голосовать за отчёт (подтверждён/фейк)
+window.toggleReportVote = async function(reportId, voteType, buttonElement) {
+  if (!currentUser) {
+    showToast('Необходима авторизация', 'error');
+    return;
+  }
+  
+  try {
+    const result = await client.mutation("challenges:voteReport", {
+      progressUpdateId: reportId,
+      userId: currentUser.id,
+      voteType: voteType
+    });
+    
+    // Обновляем UI
+    const voteCount = buttonElement.querySelector('.vote-count');
+    const currentCount = parseInt(voteCount.textContent) || 0;
+    
+    // Находим обе кнопки голосования для этого отчёта
+    const reportCard = buttonElement.closest('.report-card');
+    const verifyBtn = reportCard.querySelector('.btn-vote-verify');
+    const fakeBtn = reportCard.querySelector('.btn-vote-fake');
+    
+    if (result.voted) {
+      // Голос добавлен или изменён
+      if (voteType === 'verify') {
+        verifyBtn.classList.add('voted');
+        fakeBtn.classList.remove('voted');
+        
+        // Обновляем счётчики
+        const verifyCount = verifyBtn.querySelector('.vote-count');
+        const fakeCount = fakeBtn.querySelector('.vote-count');
+        
+        if (result.voteType === voteType) {
+          // Новый голос
+          verifyCount.textContent = currentCount + 1;
+        } else {
+          // Изменили голос с fake на verify
+          verifyCount.textContent = currentCount + 1;
+          fakeCount.textContent = Math.max(0, parseInt(fakeCount.textContent) - 1);
+        }
+      } else {
+        fakeBtn.classList.add('voted');
+        verifyBtn.classList.remove('voted');
+        
+        // Обновляем счётчики
+        const verifyCount = verifyBtn.querySelector('.vote-count');
+        const fakeCount = fakeBtn.querySelector('.vote-count');
+        
+        if (result.voteType === voteType) {
+          // Новый голос
+          fakeCount.textContent = currentCount + 1;
+        } else {
+          // Изменили голос с verify на fake
+          fakeCount.textContent = currentCount + 1;
+          verifyCount.textContent = Math.max(0, parseInt(verifyCount.textContent) - 1);
+        }
+      }
+    } else {
+      // Голос убран
+      buttonElement.classList.remove('voted');
+      voteCount.textContent = Math.max(0, currentCount - 1);
+    }
+    
+    if (tg) {
+      tg.HapticFeedback.impactOccurred('light');
+    }
+  } catch (error) {
+    console.error('Ошибка голосования:', error);
     showToast('Ошибка', 'error');
   }
 }
@@ -2010,6 +2095,18 @@ window.showProfileTab = async function(userId, tab) {
                       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                     <span class="like-count">${report.likesCount || 0}</span>
+                  </button>
+                  <button class="btn-vote btn-vote-verify" onclick="toggleReportVote('${report._id}', 'verify', this)" title="Подтверждён">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                    <span class="vote-count">${report.verifyVotes || 0}</span>
+                  </button>
+                  <button class="btn-vote btn-vote-fake" onclick="toggleReportVote('${report._id}', 'fake', this)" title="Фейк">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                    <span class="vote-count">${report.fakeVotes || 0}</span>
                   </button>
                   ${report.socialLink ? `<a href="${report.socialLink}" target="_blank" class="report-link">Посмотреть пост →</a>` : ''}
                   ${donationsText}

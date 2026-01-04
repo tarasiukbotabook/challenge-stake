@@ -340,6 +340,8 @@ export const getAllReports = query({
           photoUrl: user?.photoUrl || "",
           challengeTitle: challenge?.title || "Unknown",
           donationsAmount: totalDonations,
+          verifyVotes: report.verifyVotes || 0,
+          fakeVotes: report.fakeVotes || 0,
         };
       })
     );
@@ -389,6 +391,8 @@ export const getUserReports = query({
           photoUrl: user?.photoUrl || "",
           challengeTitle: challenge?.title || "Unknown",
           donationsAmount: totalDonations,
+          verifyVotes: report.verifyVotes || 0,
+          fakeVotes: report.fakeVotes || 0,
         };
       })
     );
@@ -450,5 +454,105 @@ export const checkLike = query({
       .first();
     
     return { liked: !!like };
+  },
+});
+
+
+// Голосование за отчёт (верифицированный или фейк)
+export const voteReport = mutation({
+  args: {
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+    voteType: v.string(), // 'verify' or 'fake'
+  },
+  handler: async (ctx, args) => {
+    const report = await ctx.db.get(args.progressUpdateId);
+    if (!report) throw new Error("Отчёт не найден");
+    
+    // Проверяем, голосовал ли уже пользователь
+    const existingVote = await ctx.db
+      .query("reportVotes")
+      .withIndex("by_user_and_report", (q) => 
+        q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
+      )
+      .first();
+    
+    if (existingVote) {
+      // Если голос такой же - убираем
+      if (existingVote.voteType === args.voteType) {
+        await ctx.db.delete(existingVote._id);
+        
+        // Уменьшаем счётчик
+        if (args.voteType === 'verify') {
+          await ctx.db.patch(args.progressUpdateId, {
+            verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
+          });
+        } else {
+          await ctx.db.patch(args.progressUpdateId, {
+            fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
+          });
+        }
+        
+        return { voted: false, voteType: null };
+      } else {
+        // Меняем тип голоса
+        await ctx.db.patch(existingVote._id, {
+          voteType: args.voteType,
+        });
+        
+        // Обновляем счётчики
+        if (args.voteType === 'verify') {
+          await ctx.db.patch(args.progressUpdateId, {
+            verifyVotes: (report.verifyVotes || 0) + 1,
+            fakeVotes: Math.max(0, (report.fakeVotes || 0) - 1),
+          });
+        } else {
+          await ctx.db.patch(args.progressUpdateId, {
+            fakeVotes: (report.fakeVotes || 0) + 1,
+            verifyVotes: Math.max(0, (report.verifyVotes || 0) - 1),
+          });
+        }
+        
+        return { voted: true, voteType: args.voteType };
+      }
+    } else {
+      // Добавляем новый голос
+      await ctx.db.insert("reportVotes", {
+        progressUpdateId: args.progressUpdateId,
+        userId: args.userId,
+        voteType: args.voteType,
+      });
+      
+      // Увеличиваем счётчик
+      if (args.voteType === 'verify') {
+        await ctx.db.patch(args.progressUpdateId, {
+          verifyVotes: (report.verifyVotes || 0) + 1,
+        });
+      } else {
+        await ctx.db.patch(args.progressUpdateId, {
+          fakeVotes: (report.fakeVotes || 0) + 1,
+        });
+      }
+      
+      return { voted: true, voteType: args.voteType };
+    }
+  },
+});
+
+// Проверить голос пользователя
+export const checkReportVote = query({
+  args: {
+    progressUpdateId: v.id("progressUpdates"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const vote = await ctx.db
+      .query("reportVotes")
+      .withIndex("by_user_and_report", (q) => 
+        q.eq("userId", args.userId).eq("progressUpdateId", args.progressUpdateId)
+      )
+      .first();
+    
+    return vote ? { voteType: vote.voteType } : null;
   },
 });

@@ -69,6 +69,8 @@ export const getAllReportsForModeration = query({
           photoUrl: user?.photoUrl || "",
           challengeTitle: challenge?.title || "Unknown",
           verificationStatus: report.verificationStatus || "pending",
+          verifyVotes: report.verifyVotes || 0,
+          fakeVotes: report.fakeVotes || 0,
         };
       })
     );

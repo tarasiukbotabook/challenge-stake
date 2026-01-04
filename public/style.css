@@ -665,6 +665,53 @@ body {
   font-weight: 500;
 }
 
+.btn-vote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-vote:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-vote:active {
+  transform: scale(0.95);
+}
+
+.btn-vote-verify.voted {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--accent-green);
+}
+
+.btn-vote-verify.voted svg {
+  fill: var(--accent-green);
+}
+
+.btn-vote-fake.voted {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.btn-vote-fake.voted svg {
+  fill: #ef4444;
+}
+
+.vote-count {
+  font-weight: 500;
+}
+
 .btn-block {
   width: 100%;
 }
