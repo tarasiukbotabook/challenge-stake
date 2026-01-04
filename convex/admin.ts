@@ -196,3 +196,119 @@ export const getUserDetails = query({
     };
   },
 });
+
+// Получить все цели для админки
+export const getAllChallenges = query({
+  handler: async (ctx) => {
+    const challenges = await ctx.db.query("challenges").order("desc").collect();
+    
+    const enriched = await Promise.all(
+      challenges.map(async (challenge) => {
+        const user = await ctx.db.get(challenge.userId);
+        const reports = await ctx.db
+          .query("progressUpdates")
+          .withIndex("by_challenge", (q) => q.eq("challengeId", challenge._id))
+          .collect();
+        
+        return {
+          ...challenge,
+          username: user?.username || 'Unknown',
+          firstName: user?.firstName,
+          photoUrl: user?.photoUrl,
+          reportsCount: reports.length,
+        };
+      })
+    );
+    
+    return enriched;
+  },
+});
+
+// Удалить цель (админ)
+export const deleteChallenge = mutation({
+  args: {
+    challengeId: v.id("challenges"),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+    if (!challenge) throw new Error("Цель не найдена");
+    
+    // Удаляем все отчёты по этой цели
+    const reports = await ctx.db
+      .query("progressUpdates")
+      .withIndex("by_challenge", (q) => q.eq("challengeId", args.challengeId))
+      .collect();
+    
+    for (const report of reports) {
+      await ctx.db.delete(report._id);
+    }
+    
+    // Удаляем все донаты к этой цели
+    const donations = await ctx.db
+      .query("donations")
+      .withIndex("by_challenge", (q) => q.eq("challengeId", args.challengeId))
+      .collect();
+    
+    for (const donation of donations) {
+      await ctx.db.delete(donation._id);
+    }
+    
+    // Удаляем саму цель
+    await ctx.db.delete(args.challengeId);
+    
+    return { success: true };
+  },
+});
+
+// Поиск пользователей
+export const searchUsers = query({
+  args: {
+    searchQuery: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const query = args.searchQuery.toLowerCase().trim();
+    
+    if (!query) {
+      return [];
+    }
+    
+    const allUsers = await ctx.db.query("users").collect();
+    
+    // Фильтруем пользователей по username, телефону, имени
+    const filtered = allUsers.filter(user => {
+      const username = user.username?.toLowerCase() || '';
+      const phone = user.phone?.toLowerCase() || '';
+      const firstName = user.firstName?.toLowerCase() || '';
+      const lastName = user.lastName?.toLowerCase() || '';
+      
+      return username.includes(query) || 
+             phone.includes(query) || 
+             firstName.includes(query) || 
+             lastName.includes(query);
+    });
+    
+    // Обогащаем данными
+    const enriched = await Promise.all(
+      filtered.map(async (user) => {
+        const challenges = await ctx.db
+          .query("challenges")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect();
+        
+        const reports = await ctx.db
+          .query("progressUpdates")
+          .filter((q) => q.eq(q.field("userId"), user._id))
+          .collect();
+        
+        return {
+          ...user,
+          challengesCount: challenges.length,
+          reportsCount: reports.length,
+          activeChallenges: challenges.filter(c => c.status === 'active').length,
+        };
+      })
+    );
+    
+    return enriched;
+  },
+});

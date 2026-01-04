@@ -303,6 +303,13 @@
         </svg>
         <span>Пользователи</span>
       </div>
+      <div class="sidebar-item" onclick="switchTab('challenges')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 6v6l4 2"></path>
+        </svg>
+        <span>Цели</span>
+      </div>
       <div class="sidebar-item" onclick="switchTab('reports')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -323,7 +330,39 @@
     </div>
 
     <div id="users-content" class="content active">
+      <div style="margin-bottom: 20px;">
+        <input 
+          type="text" 
+          id="user-search" 
+          placeholder="Поиск по username, телефону или имени..." 
+          onkeyup="searchUsers()"
+          style="width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;"
+        >
+      </div>
       <div class="loading">Загрузка пользователей...</div>
+    </div>
+
+    <div id="challenges-content" class="content">
+      <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+        <div style="flex: 1;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Фильтр по статусу:</label>
+          <select id="challenge-status-filter" onchange="filterChallenges()" style="width: 100%; padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;">
+            <option value="all">Все цели</option>
+            <option value="active">Активные</option>
+            <option value="completed">Завершённые</option>
+            <option value="failed">Проваленные</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Сортировка:</label>
+          <select id="challenge-sort-by" onchange="filterChallenges()" style="width: 100%; padding: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px;">
+            <option value="date">По дате (новые)</option>
+            <option value="stake">По ставке</option>
+            <option value="reports">По отчётам</option>
+          </select>
+        </div>
+      </div>
+      <div class="loading">Загрузка целей...</div>
     </div>
 
     <div id="reports-content" class="content">
@@ -640,9 +679,206 @@
       document.body.appendChild(modal);
     }
 
+    // Поиск пользователей
+    let searchTimeout;
+    async function searchUsers() {
+      const searchInput = document.getElementById('user-search');
+      const query = searchInput.value.trim();
+      
+      clearTimeout(searchTimeout);
+      
+      if (!query) {
+        loadUsers();
+        return;
+      }
+      
+      searchTimeout = setTimeout(async () => {
+        try {
+          const users = await client.query("admin:searchUsers", { searchQuery: query });
+          
+          const usersContent = document.getElementById('users-content');
+          const searchBox = usersContent.querySelector('#user-search').parentElement;
+          
+          usersContent.innerHTML = '';
+          usersContent.appendChild(searchBox);
+          
+          if (users.length === 0) {
+            usersContent.innerHTML += '<div class="loading">Пользователи не найдены</div>';
+            return;
+          }
+          
+          usersContent.innerHTML += `
+            <table>
+              <thead>
+                <tr>
+                  <th>Пользователь</th>
+                  <th>Username</th>
+                  <th>Telegram ID</th>
+                  <th>Баланс</th>
+                  <th>Цели</th>
+                  <th>Отчёты</th>
+                  <th>Активных</th>
+                  <th>Дата регистрации</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${users.map(user => {
+                  const avatar = user.photoUrl 
+                    ? \`<img src="\${user.photoUrl}" class="user-avatar">\` 
+                    : \`<div class="user-avatar">\${(user.firstName || user.username).charAt(0).toUpperCase()}</div>\`;
+                  
+                  const date = new Date(user._creationTime).toLocaleDateString('ru-RU');
+                  
+                  return \`
+                    <tr>
+                      <td>\${avatar} \${user.firstName || ''} \${user.lastName || ''}</td>
+                      <td>@\${user.username}</td>
+                      <td>\${user.telegramId || user.phone || '-'}</td>
+                      <td style="color: var(--accent-gold); font-weight: 600;">\${user.balance}</td>
+                      <td>\${user.challengesCount}</td>
+                      <td>\${user.reportsCount}</td>
+                      <td>\${user.activeChallenges}</td>
+                      <td>\${date}</td>
+                    </tr>
+                  \`;
+                }).join('')}
+              </tbody>
+            </table>
+          `;
+        } catch (error) {
+          console.error('Error searching users:', error);
+        }
+      }, 300);
+    }
+
+    // Загрузка целей
+    let allChallenges = [];
+    
+    async function loadChallenges() {
+      try {
+        allChallenges = await client.query("admin:getAllChallenges", {});
+        filterChallenges();
+      } catch (error) {
+        console.error('Error loading challenges:', error);
+        const challengesContent = document.getElementById('challenges-content');
+        const loadingDiv = challengesContent.querySelector('.loading');
+        if (loadingDiv) {
+          loadingDiv.textContent = 'Ошибка загрузки';
+        }
+      }
+    }
+
+    function filterChallenges() {
+      const statusFilter = document.getElementById('challenge-status-filter').value;
+      const sortBy = document.getElementById('challenge-sort-by').value;
+      
+      let filtered = allChallenges;
+      if (statusFilter !== 'all') {
+        filtered = allChallenges.filter(c => c.status === statusFilter);
+      }
+      
+      filtered = [...filtered];
+      switch (sortBy) {
+        case 'stake':
+          filtered.sort((a, b) => b.stakeAmount - a.stakeAmount);
+          break;
+        case 'reports':
+          filtered.sort((a, b) => b.reportsCount - a.reportsCount);
+          break;
+        case 'date':
+        default:
+          filtered.sort((a, b) => b._creationTime - a._creationTime);
+          break;
+      }
+      
+      displayChallenges(filtered);
+    }
+
+    function displayChallenges(challenges) {
+      const challengesContent = document.getElementById('challenges-content');
+      const loadingDiv = challengesContent.querySelector('.loading');
+      
+      if (loadingDiv) {
+        loadingDiv.remove();
+      }
+      
+      let tableContainer = challengesContent.querySelector('.table-container');
+      if (!tableContainer) {
+        tableContainer = document.createElement('div');
+        tableContainer.className = 'table-container';
+        challengesContent.appendChild(tableContainer);
+      }
+      
+      tableContainer.innerHTML = \`
+        <table>
+          <thead>
+            <tr>
+              <th>Пользователь</th>
+              <th>Название</th>
+              <th>Категория</th>
+              <th>Ставка</th>
+              <th>Донаты</th>
+              <th>Отчётов</th>
+              <th>Статус</th>
+              <th>Дедлайн</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            \${challenges.map(challenge => {
+              const avatar = challenge.photoUrl 
+                ? \`<img src="\${challenge.photoUrl}" class="user-avatar">\` 
+                : \`<div class="user-avatar">\${(challenge.firstName || challenge.username).charAt(0).toUpperCase()}</div>\`;
+              
+              const deadline = new Date(challenge.deadline).toLocaleDateString('ru-RU');
+              
+              const statusBadge = {
+                active: '<span class="badge badge-pending">Активная</span>',
+                completed: '<span class="badge badge-verified">✓ Завершена</span>',
+                failed: '<span class="badge badge-fake">✗ Провалена</span>',
+              }[challenge.status] || '<span class="badge badge-pending">Активная</span>';
+              
+              return \`
+                <tr>
+                  <td>\${avatar} @\${challenge.username}</td>
+                  <td>\${challenge.title}</td>
+                  <td>\${challenge.category}</td>
+                  <td style="color: var(--accent-gold); font-weight: 600;">$\${challenge.stakeAmount}</td>
+                  <td style="color: var(--accent-green); font-weight: 600;">$\${challenge.donationsAmount || 0}</td>
+                  <td>\${challenge.reportsCount}</td>
+                  <td>\${statusBadge}</td>
+                  <td>\${deadline}</td>
+                  <td>
+                    <button class="btn btn-fake" onclick="deleteChallenge('\${challenge._id}')" title="Удалить">🗑️</button>
+                  </td>
+                </tr>
+              \`;
+            }).join('')}
+          </tbody>
+        </table>
+      \`;
+    }
+
+    async function deleteChallenge(challengeId) {
+      if (!confirm('Вы уверены, что хотите удалить эту цель? Это также удалит все отчёты и донаты.')) {
+        return;
+      }
+      
+      try {
+        await client.mutation("admin:deleteChallenge", { challengeId });
+        alert('Цель успешно удалена');
+        loadChallenges();
+        loadStats();
+      } catch (error) {
+        console.error('Error deleting challenge:', error);
+        alert('Ошибка удаления цели');
+      }
+    }
+
     // Загрузка данных при старте
     loadStats();
     loadUsers();
+    loadChallenges();
     loadReports();
   </script>
 </body>
