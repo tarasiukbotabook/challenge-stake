@@ -28,6 +28,60 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--primary-dark);
       color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: var(--secondary-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      margin-bottom: 30px;
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-item {
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(132, 204, 22, 0.1);
+      color: var(--text-primary);
+    }
+
+    .sidebar-item.active {
+      background: rgba(132, 204, 22, 0.2);
+      color: var(--accent-lime);
+      font-weight: 600;
+    }
+
+    .main-content {
+      margin-left: 250px;
+      flex: 1;
       padding: 20px;
     }
 
@@ -77,31 +131,7 @@
     }
 
     .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid var(--border-color);
-    }
-
-    .tab {
-      padding: 12px 24px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 500;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      color: var(--accent-lime);
-      border-bottom-color: var(--accent-lime);
-    }
-
-    .tab:hover {
-      color: var(--text-primary);
+      display: none;
     }
 
     .content {
@@ -238,17 +268,38 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🛡️ Admin Panel</h1>
-    <p class="subtitle">Challenge Stake Administration</p>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1 style="font-size: 24px; margin-bottom: 5px;">🛡️ Admin</h1>
+      <p style="font-size: 14px; color: var(--text-secondary); margin: 0;">Challenge Stake</p>
+    </div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item active" onclick="switchTab('users')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Пользователи</span>
+      </div>
+      <div class="sidebar-item" onclick="switchTab('reports')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Отчёты</span>
+      </div>
+    </div>
+  </div>
 
+  <div class="main-content">
+    <div class="container">
     <div class="stats-grid" id="stats">
       <div class="loading">Загрузка статистики...</div>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('users')">👥 Пользователи</button>
-      <button class="tab" onclick="switchTab('reports')">📝 Отчёты</button>
     </div>
 
     <div id="users-content" class="content active">
@@ -279,7 +330,7 @@
       <div class="loading">Загрузка отчётов...</div>
     </div>
   </div>
-
+</body>
   <script>
     const CONVEX_URL = "https://lovable-mongoose-763.convex.cloud";
 
@@ -316,10 +367,12 @@
     };
 
     function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      // Обновляем активный пункт меню
+      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+      event.target.closest('.sidebar-item').classList.add('active');
       
-      event.target.classList.add('active');
+      // Переключаем контент
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
       document.getElementById(`${tab}-content`).classList.add('active');
     }
 
@@ -477,7 +530,6 @@
               <th>Челлендж</th>
               <th>Контент</th>
               <th>Фото</th>
-              <th>Лайки</th>
               <th>✓ Голоса</th>
               <th>✗ Голоса</th>
               <th>Статус</th>
@@ -511,7 +563,6 @@
                   <td>${report.challengeTitle}</td>
                   <td><div class="report-content">${report.content}</div></td>
                   <td>${report.imageUrl ? `<img src="${report.imageUrl}" class="report-image">` : '-'}</td>
-                  <td>${report.likesCount || 0}</td>
                   <td style="color: var(--accent-green); font-weight: 600;">${report.verifyVotes || 0}</td>
                   <td style="color: #ef4444; font-weight: 600;">${report.fakeVotes || 0}</td>
                   <td>${statusBadge}</td>

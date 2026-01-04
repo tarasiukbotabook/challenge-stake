@@ -425,6 +425,20 @@ body {
   opacity: 1 !important;
 }
 
+.challenge-timer-big {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(132, 204, 22, 0.1);
+  border: 1px solid rgba(132, 204, 22, 0.3);
+  border-radius: 8px;
+  margin-top: 12px;
+  color: var(--accent-lime);
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .challenge-stake {
   display: flex;
   align-items: center;

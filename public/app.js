@@ -530,7 +530,6 @@ function displayChallenges(challenges, isMine, container) {
               <span>${deadline.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
               <span>•</span>
               <span>${statusBadge[challenge.status]}</span>
-              ${challenge.status === 'active' ? `<span>•</span><span class="challenge-timer">${timeRemaining}</span>` : ''}
             </div>
           </div>
           <button class="btn-menu" onclick="showChallengeMenu('${challenge._id}', '${challenge.title.replace(/'/g, "\\'")}' )" title="Поделиться">
@@ -542,6 +541,15 @@ function displayChallenges(challenges, isMine, container) {
           </button>
         </div>
         <div class="challenge-title" onclick="window.showChallengeDetail('${challenge._id}')" style="cursor: pointer; margin-top: 8px;">${challenge.title}</div>
+        ${challenge.status === 'active' ? `
+          <div class="challenge-timer-big">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>${timeRemaining}</span>
+          </div>
+        ` : ''}
         <div class="challenge-stake">
           <div class="challenge-stake-amount">
             <span class="currency">$</span>
