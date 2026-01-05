@@ -400,3 +400,34 @@ export const updatePrivacy = mutation({
     return { success: true };
   },
 });
+
+// Получить приглашения в компании для пользователя
+export const getCompanyInvites = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const invites = await ctx.db
+      .query("companyEmployees")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "invited"))
+      .collect();
+
+    const invitesWithCompanies = await Promise.all(
+      invites.map(async (invite) => {
+        const company = await ctx.db.get(invite.companyId);
+        const inviter = invite.invitedBy ? await ctx.db.get(invite.invitedBy) : null;
+        
+        return {
+          _id: invite._id,
+          companyId: invite.companyId,
+          companyName: company?.name,
+          companyLogo: company?.logoUrl,
+          role: invite.role,
+          inviterName: inviter ? `${inviter.firstName || ''} ${inviter.lastName || ''}`.trim() : 'Компания',
+          _creationTime: invite._creationTime,
+        };
+      })
+    );
+
+    return invitesWithCompanies;
+  },
+});

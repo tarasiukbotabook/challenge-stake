@@ -18,9 +18,46 @@ export default defineSchema({
     rating: v.optional(v.number()), // Рейтинг пользователя
     role: v.optional(v.string()), // Роль пользователя
     isPrivate: v.optional(v.boolean()), // Скрытый профиль
+    companyId: v.optional(v.id("companies")), // Связь с компанией
   }).index("by_email", ["email"])
     .index("by_telegram", ["telegramId"])
-    .index("by_username", ["username"]),
+    .index("by_username", ["username"])
+    .index("by_company", ["companyId"]),
+
+  companies: defineTable({
+    name: v.string(),
+    email: v.string(),
+    password: v.string(),
+    logoUrl: v.optional(v.string()),
+    description: v.optional(v.string()),
+    website: v.optional(v.string()),
+    balance: v.number(),
+    plan: v.string(), // 'free', 'starter', 'business', 'enterprise'
+    employeesLimit: v.number(), // Лимит сотрудников
+    challengesLimit: v.number(), // Лимит активных челленджей
+  }).index("by_email", ["email"]),
+
+  companyEmployees: defineTable({
+    companyId: v.id("companies"),
+    userId: v.id("users"),
+    role: v.string(), // 'admin', 'manager', 'employee'
+    status: v.string(), // 'active', 'invited', 'suspended'
+    invitedBy: v.optional(v.id("users")),
+  }).index("by_company", ["companyId"])
+    .index("by_user", ["userId"])
+    .index("by_company_and_user", ["companyId", "userId"]),
+
+  companyChallenges: defineTable({
+    companyId: v.id("companies"),
+    challengeId: v.id("challenges"),
+    createdBy: v.id("users"), // Кто создал (admin/manager)
+    assignedTo: v.optional(v.array(v.id("users"))), // Кому назначен
+    isTeamChallenge: v.boolean(), // Командный или индивидуальный
+    reward: v.optional(v.number()), // Награда за выполнение
+    rewardType: v.optional(v.string()), // 'bonus', 'gift', 'recognition'
+  }).index("by_company", ["companyId"])
+    .index("by_challenge", ["challengeId"])
+    .index("by_creator", ["createdBy"]),
 
   challenges: defineTable({
     userId: v.id("users"),
@@ -35,6 +72,7 @@ export default defineSchema({
     tags: v.optional(v.array(v.string())), // Теги
     verificationType: v.string(),
     completedAt: v.optional(v.string()),
+    isCompanyChallenge: v.optional(v.boolean()), // Корпоративный челлендж
   }).index("by_user", ["userId"])
     .index("by_status", ["status"]),
 

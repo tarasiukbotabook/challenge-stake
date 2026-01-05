@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as challenges from "../challenges.js";
+import type * as companies from "../companies.js";
 import type * as seed from "../seed.js";
 import type * as telegram from "../telegram.js";
 import type * as users from "../users.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   challenges: typeof challenges;
+  companies: typeof companies;
   seed: typeof seed;
   telegram: typeof telegram;
   users: typeof users;
