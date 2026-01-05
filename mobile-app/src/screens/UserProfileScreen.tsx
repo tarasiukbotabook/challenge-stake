@@ -63,7 +63,7 @@ export default function UserProfileScreen({ navigation, route }: any) {
   };
 
   const handleCopyProfileLink = async () => {
-    const profileLink = `https://pofactu.app/profile/${user.username}`;
+    const profileLink = `https://cel.im/${user.username}`;
     await Clipboard.setStringAsync(profileLink);
     
     // Показываем toast уведомление

@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         main: 'public/index.html',
         admin: 'public/admin.html',
+        landing: 'public/landing.html',
       },
       external: [],
     },

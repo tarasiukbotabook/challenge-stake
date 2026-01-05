@@ -277,13 +277,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('Loading feed...');
       switchScreen('feed');
     } else {
-      // Если не в Telegram, показываем заглушку
-      if (!isTelegram) {
-        const greetingEl = document.getElementById('user-greeting');
-        if (greetingEl) {
-          greetingEl.textContent = 'Откройте приложение в Telegram для авторизации';
-        }
-      }
+      // Если не авторизован - редирект на лендинг
+      console.log('User not logged in, redirecting to landing...');
+      window.location.href = '/landing.html';
+      return;
     }
 
     console.log('Setting up event listeners...');
@@ -1652,35 +1649,40 @@ async function handleRouting() {
     return;
   }
   
-  // Профиль пользователя: /username
-  if (path.startsWith('/') && !path.includes('/challenge/') && !path.includes('/report/') && path.length > 1) {
-    const username = path.substring(1); // Убираем первый /
-    if (username) {
-      console.log('Opening profile for username:', username);
+  // Цель: /goal/[id] (новый формат вместо /challenge/)
+  if (path.startsWith('/goal/')) {
+    const challengeId = path.replace('/goal/', '');
+    console.log('Opening goal:', challengeId);
+    
+    try {
+      // Переходим в ленту и показываем цель
+      switchScreen('feed');
+      await showChallenges('all');
       
-      try {
-        // Ищем пользователя по username
-        const user = await client.query("users:getUserByUsername", { username });
-        await showUserProfile(user.id);
-      } catch (error) {
-        console.error('Error loading user profile:', error);
-        showToast(`Пользователь ${username} не найден`, 'error');
-      }
+      // Прокручиваем к цели (опционально)
+      setTimeout(() => {
+        const challengeCard = document.querySelector(`[data-challenge-id="${challengeId}"]`);
+        if (challengeCard) {
+          challengeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          challengeCard.style.animation = 'pulse 1s ease';
+        }
+      }, 500);
+    } catch (error) {
+      console.error('Error loading goal:', error);
+      showToast('Ошибка загрузки цели', 'error');
     }
     return;
   }
   
-  // Челлендж: /challenge/[id]
+  // Старый формат для обратной совместимости: /challenge/[id]
   if (path.startsWith('/challenge/')) {
     const challengeId = path.replace('/challenge/', '');
-    console.log('Opening challenge:', challengeId);
+    console.log('Opening challenge (old format):', challengeId);
     
     try {
-      // Переходим в ленту и показываем челлендж
       switchScreen('feed');
       await showChallenges('all');
       
-      // Прокручиваем к челленджу (опционально)
       setTimeout(() => {
         const challengeCard = document.querySelector(`[data-challenge-id="${challengeId}"]`);
         if (challengeCard) {
@@ -1690,7 +1692,7 @@ async function handleRouting() {
       }, 500);
     } catch (error) {
       console.error('Error loading challenge:', error);
-      showToast('Ошибка загрузки челленджа', 'error');
+      showToast('Ошибка загрузки цели', 'error');
     }
     return;
   }
@@ -1716,6 +1718,24 @@ async function handleRouting() {
     } catch (error) {
       console.error('Error loading report:', error);
       showToast('Ошибка загрузки отчёта', 'error');
+    }
+    return;
+  }
+  
+  // Профиль пользователя: /username (должен быть последним, так как ловит все остальные пути)
+  if (path.startsWith('/') && !path.includes('/goal/') && !path.includes('/challenge/') && !path.includes('/report/') && path.length > 1) {
+    const username = path.substring(1); // Убираем первый /
+    if (username) {
+      console.log('Opening profile for username:', username);
+      
+      try {
+        // Ищем пользователя по username
+        const user = await client.query("users:getUserByUsername", { username });
+        await showUserProfile(user.id);
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        showToast(`Пользователь ${username} не найден`, 'error');
+      }
     }
     return;
   }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { colors, spacing, fontSize, fontWeight } from '../styles/theme';
 import { BellIcon } from './Icons';
 
@@ -17,7 +17,11 @@ export default function TopBar({ balance, onBalancePress, onNotificationsPress, 
       <View style={styles.leftSpacer} />
 
       {/* Логотип по центру */}
-      <Text style={styles.logo}>POFACTU</Text>
+      <Image 
+        source={require('../../logo.png')} 
+        style={styles.logo}
+        resizeMode="contain"
+      />
 
       <View style={styles.rightSection}>
         {/* Баланс */}
@@ -68,10 +72,8 @@ const styles = StyleSheet.create({
     width: 80,
   },
   logo: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.bold,
-    color: colors.lime,
-    letterSpacing: 1,
+    height: 32,
+    width: 120,
   },
   rightSection: {
     flexDirection: 'row',

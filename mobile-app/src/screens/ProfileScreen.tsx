@@ -44,7 +44,7 @@ export default function ProfileScreen({ navigation, route, userId }: any) {
   };
 
   const handleCopyProfileLink = async () => {
-    const profileLink = `https://pofactu.app/profile/${mockUser.username}`;
+    const profileLink = `https://cel.im/${mockUser.username}`;
     await Clipboard.setStringAsync(profileLink);
     
     // Показываем toast уведомление

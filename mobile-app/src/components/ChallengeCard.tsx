@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert, ActivityIndicator } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as MediaLibrary from 'expo-media-library';
 import { captureRef } from 'react-native-view-shot';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../styles/theme';
 import { MenuIcon, CheckIcon, DoubleCheckIcon, XIcon } from './Icons';
+import StoryTemplate from './StoryTemplate';
 
 interface ChallengeCardProps {
   challenge: any;
@@ -21,6 +22,7 @@ export default function ChallengeCard({
 }: ChallengeCardProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [storyVisible, setStoryVisible] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const storyRef = useRef(null);
   
   const renderAvatar = () => {
@@ -103,39 +105,67 @@ export default function ChallengeCard({
 
   const handleCopyLink = async () => {
     setMenuVisible(false);
-    const challengeLink = `https://greedy-badger-196.convex.site/challenge/${challenge._id}`;
+    const challengeLink = `https://cel.im/goal/${challenge._id}`;
     await Clipboard.setStringAsync(challengeLink);
     Alert.alert('Скопировано', 'Ссылка на цель скопирована в буфер обмена');
   };
 
   const handleGenerateStory = async () => {
+    console.log('=== START handleGenerateStory ===');
     setMenuVisible(false);
-    setStoryVisible(true);
     
-    // Даём время на рендер
-    setTimeout(async () => {
-      try {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Ошибка', 'Необходимо разрешение на сохранение в галерею');
-          setStoryVisible(false);
-          return;
-        }
+    try {
+      console.log('Step 1: Setting state...');
+      setIsGenerating(true);
+      setStoryVisible(true);
+      console.log('State set, waiting for render...');
+      
+      // Даём время на рендер
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Step 2: Render complete, capturing...');
 
-        const uri = await captureRef(storyRef, {
-          format: 'png',
-          quality: 1,
-        });
-
-        await MediaLibrary.saveToLibraryAsync(uri);
+      if (!storyRef.current) {
+        console.error('storyRef.current is null!');
+        Alert.alert('Ошибка', 'Не удалось получить ссылку на view');
         setStoryVisible(false);
-        Alert.alert('Готово!', 'Сторис сохранена в галерею');
-      } catch (error) {
-        console.error('Error generating story:', error);
-        setStoryVisible(false);
-        Alert.alert('Ошибка', 'Не удалось сгенерировать сторис');
+        setIsGenerating(false);
+        return;
       }
-    }, 100);
+
+      console.log('Step 3: Calling captureRef...');
+      const uri = await captureRef(storyRef, {
+        format: 'png',
+        quality: 1,
+        width: 1080,
+        height: 1920,
+      });
+      console.log('Screenshot captured, uri:', uri);
+
+      console.log('Step 4: Saving to library (will request permission if needed)...');
+      const asset = await MediaLibrary.saveToLibraryAsync(uri);
+      console.log('Saved successfully, asset:', asset);
+      
+      // Скрываем всё
+      setStoryVisible(false);
+      setIsGenerating(false);
+      
+      Alert.alert('Готово!', 'Сторис сохранена в галерею');
+      console.log('=== END handleGenerateStory SUCCESS ===');
+    } catch (error) {
+      console.error('=== ERROR in handleGenerateStory ===');
+      console.error('Error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      setStoryVisible(false);
+      setIsGenerating(false);
+      
+      // Если ошибка связана с разрешениями, покажем понятное сообщение
+      if (error?.message?.includes('permission') || error?.message?.includes('Permission')) {
+        Alert.alert('Ошибка', 'Необходимо разрешение на сохранение в галерею. Проверьте настройки приложения.');
+      } else {
+        Alert.alert('Ошибка', `Не удалось сгенерировать сторис: ${error?.message || error}`);
+      }
+    }
   };
 
   if (variant === 'full') {
@@ -215,6 +245,12 @@ export default function ChallengeCard({
               <View style={styles.menuContainer}>
                 <TouchableOpacity 
                   style={styles.menuItem}
+                  onPress={handleGenerateStory}
+                >
+                  <Text style={styles.menuItemText}>📸 Сгенерировать сторис</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.menuItem}
                   onPress={handleCopyLink}
                 >
                   <Text style={styles.menuItemText}>Скопировать ссылку</Text>
@@ -228,6 +264,23 @@ export default function ChallengeCard({
               </View>
             </TouchableOpacity>
           </TouchableOpacity>
+        </Modal>
+        
+        {/* Story Generation Modal */}
+        <Modal
+          visible={storyVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.storyModalContainer}>
+            {isGenerating && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={colors.lime} />
+                <Text style={styles.loadingText}>Генерируем сторис...</Text>
+              </View>
+            )}
+            <StoryTemplate challenge={challenge} storyRef={storyRef} />
+          </View>
         </Modal>
       </>
     );
@@ -293,50 +346,22 @@ export default function ChallengeCard({
         </TouchableOpacity>
       </Modal>
       
-      {/* Story Generation Modal */}
-      <Modal
-        visible={storyVisible}
-        transparent={true}
-        animationType="none"
-      >
-        <View style={styles.storyModalContainer}>
-          <View ref={storyRef} style={styles.storyCanvas} collapsable={false}>
-            {/* Градиентный фон */}
-            <View style={styles.storyBackground}>
-              {/* Контент сторис */}
-              <View style={styles.storyContent}>
-                <Text style={styles.storyLogo}>POFACTU</Text>
-                
-                <View style={styles.storyMain}>
-                  <Text style={styles.storyEmoji}>🎯</Text>
-                  <Text style={styles.storyTitle}>{challenge.title}</Text>
-                  
-                  <View style={styles.storyDetails}>
-                    <View style={styles.storyDetailItem}>
-                      <Text style={styles.storyDetailLabel}>Ставка</Text>
-                      <Text style={styles.storyDetailValue}>${challenge.stakeAmount}</Text>
-                    </View>
-                    
-                    <View style={styles.storyDetailItem}>
-                      <Text style={styles.storyDetailLabel}>Дедлайн</Text>
-                      <Text style={styles.storyDetailValue}>
-                        {new Date(challenge.deadline).toLocaleDateString('ru-RU', { 
-                          day: 'numeric', 
-                          month: 'long' 
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <Text style={styles.storyUsername}>@{challenge.username}</Text>
-                </View>
-                
-                <Text style={styles.storyFooter}>Следи за моим прогрессом!</Text>
+        {/* Story Generation Modal */}
+        <Modal
+          visible={storyVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.storyModalContainer}>
+            {isGenerating && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={colors.lime} />
+                <Text style={styles.loadingText}>Генерируем сторис...</Text>
               </View>
-            </View>
+            )}
+            <StoryTemplate challenge={challenge} storyRef={storyRef} />
           </View>
-        </View>
-      </Modal>
+        </Modal>
     </>
   );
 }
@@ -539,80 +564,25 @@ const styles = StyleSheet.create({
   // Story styles
   storyModalContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingOverlay: {
     position: 'absolute',
-    left: -10000, // Скрываем за экраном
-  },
-  storyCanvas: {
-    width: 1080,
-    height: 1920,
-  },
-  storyBackground: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#0a1612',
-  },
-  storyContent: {
-    flex: 1,
-    padding: 60,
-    justifyContent: 'space-between',
-  },
-  storyLogo: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: colors.lime,
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
-  storyMain: {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 40,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  storyEmoji: {
-    fontSize: 120,
-  },
-  storyTitle: {
-    fontSize: 56,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    lineHeight: 68,
-    paddingHorizontal: 40,
-  },
-  storyDetails: {
-    flexDirection: 'row',
-    gap: 60,
-    marginTop: 40,
-  },
-  storyDetailItem: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(132, 204, 22, 0.1)',
-    paddingVertical: 30,
-    paddingHorizontal: 50,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'rgba(132, 204, 22, 0.3)',
-  },
-  storyDetailLabel: {
-    fontSize: 28,
-    color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  storyDetailValue: {
-    fontSize: 48,
-    fontWeight: '700',
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
     color: colors.lime,
-  },
-  storyUsername: {
-    fontSize: 40,
-    color: colors.lime,
-    fontWeight: '600',
-    marginTop: 40,
-  },
-  storyFooter: {
-    fontSize: 32,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: fontWeight.semibold,
   },
 });

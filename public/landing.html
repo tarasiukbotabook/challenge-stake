@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>cel.im - Достигай целей с финансовой мотивацией</title>
+  <meta name="description" content="iOS приложение для достижения целей с денежными ставками. Публичная отчётность, донаты сообщества, благотворительность.">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo-header">
+          <span class="logo-name">cel.im</span>
+        </div>
+        <nav class="nav">
+          <a href="#features" class="nav-link">Возможности</a>
+          <a href="#how-it-works" class="nav-link">Как работает</a>
+          <a href="#pricing" class="nav-link">Тарифы</a>
+          <a href="#faq" class="nav-link">FAQ</a>
+        </nav>
+        <button class="btn btn-primary-small" onclick="handleDownload()">Скачать</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-new">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-left">
+          <div class="hero-badge">iOS приложение</div>
+          <h1 class="hero-heading">
+            Достигай целей с<br>
+            <span class="gradient-text">финансовой мотивацией</span>
+          </h1>
+          <p class="hero-description">
+            Ставьте деньги на свои цели, публикуйте отчёты с фото и получайте поддержку сообщества. 
+            Система голосования и донатов помогает оставаться мотивированным. Финансовая мотивация увеличивает вероятность успеха в 4.5 раза.
+          </p>
+          <button class="btn btn-cta" onclick="handleDownload()">
+            Скачать приложение
+          </button>
+          <div class="hero-stats-mini">
+            <div class="stat-mini">
+              <div class="stat-mini-number">+10K</div>
+              <div class="stat-mini-label">Пользователей</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-number">100%</div>
+              <div class="stat-mini-label">Бесплатно</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-number">0</div>
+              <div class="stat-mini-label">Комиссий</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="phone-mockup-container">
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <img src="lamdapp.jpg" alt="cel.im приложение" class="app-screenshot">
+              </div>
+              <div class="phone-home-indicator"></div>
+            </div>
+            <div class="phone-glow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Section -->
+  <section class="why-section">
+    <div class="container">
+      <h2 class="section-heading">Почему именно наш трекер привычек</h2>
+      <p class="section-subheading">Уникальная система мотивации через финансовые обязательства</p>
+      
+      <div class="features-grid">
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <svg class="feature-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3 class="feature-heading">Финансовая мотивация</h3>
+          <p class="feature-text">
+            Поставьте деньги на свою цель. Исследования показывают, что финансовые обязательства 
+            увеличивают вероятность успеха в 4.5 раза по сравнению с обычными целями.
+          </p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <svg class="feature-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 class="feature-heading">Публичная отчётность</h3>
+          <p class="feature-text">
+            Делитесь прогрессом с сообществом. Публичные обязательства создают социальное 
+            давление, которое помогает не сдаваться на пути к цели.
+          </p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <svg class="feature-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
+          </div>
+          <h3 class="feature-heading">Голосование за отчёты</h3>
+          <p class="feature-text">
+            Сообщество голосует за отчёты: "Подтверждаю" или "Фейк". Система голосования 
+            помогает поддерживать честность и мотивирует публиковать качественные отчёты.
+          </p>
+        </div>
+
+        <div class="feature-box">
+          <div class="feature-icon-wrapper">
+            <svg class="feature-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+          <h3 class="feature-heading">Благотворительность</h3>
+          <p class="feature-text">
+            Даже если не выполните цель, деньги пойдут на благотворительность. 
+            Win-win ситуация: либо вы достигаете цели, либо помогаете нуждающимся.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Goals Section -->
+  <section class="goals-section" id="features">
+    <div class="container">
+      <h2 class="section-heading">Ваши цели — наши инструменты</h2>
+      <p class="section-subheading">Всё необходимое для достижения любых целей</p>
+      
+      <div class="goals-grid">
+        <div class="goal-card">
+          <div class="goal-icon-wrapper">
+            <svg class="goal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+          </div>
+          <h3 class="goal-title">6 категорий целей</h3>
+          <p class="goal-description">
+            Здоровье и спорт, Обучение, Бизнес, Привычки, Творчество, Другое. Выбирайте категорию и ставьте от $1
+          </p>
+        </div>
+
+        <div class="goal-card">
+          <div class="goal-icon-wrapper">
+            <svg class="goal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="M21 15l-5-5L5 21"/>
+            </svg>
+          </div>
+          <h3 class="goal-title">Отчёты с фото</h3>
+          <p class="goal-description">
+            Публикуйте отчёты с фото, текстом и ссылками. Сообщество видит ваш прогресс и поддерживает
+          </p>
+        </div>
+
+        <div class="goal-card">
+          <div class="goal-icon-wrapper">
+            <svg class="goal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <h3 class="goal-title">Система рейтинга</h3>
+          <p class="goal-description">
+            Зарабатывайте баллы рейтинга за создание целей (+10), публикацию отчётов (+1) и выполнение целей
+          </p>
+        </div>
+
+        <div class="goal-card">
+          <div class="goal-icon-wrapper">
+            <svg class="goal-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <h3 class="goal-title">Уведомления</h3>
+          <p class="goal-description">
+            Получайте уведомления о донатах, изменении рейтинга, балансе и активности по вашим целям
+          </p>
+        </div>
+      </div>
+
+      <button class="btn btn-cta-center" onclick="handleDownload()">
+        Скачать приложение
+      </button>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-section" id="how-it-works">
+    <div class="container">
+      <h2 class="section-heading">Как это работает</h2>
+      <p class="section-subheading">Простой процесс в 4 шага</p>
+      
+      <div class="steps-timeline">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content-box">
+            <h3 class="step-title">Создайте цель</h3>
+            <p class="step-desc">
+              Выберите цель и поставьте на неё деньги. Минимальная ставка — $1. 
+              Чем больше ставка, тем сильнее мотивация.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content-box">
+            <h3 class="step-title">Публикуйте отчёты</h3>
+            <p class="step-desc">
+              Делитесь прогрессом с сообществом. Добавляйте фото, ссылки на соцсети. 
+              Получайте лайки и поддержку.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content-box">
+            <h3 class="step-title">Получайте донаты</h3>
+            <p class="step-desc">
+              Люди могут поддержать вашу цель донатами. Это дополнительная мотивация 
+              и финансовая поддержка.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content-box">
+            <h3 class="step-title">Выполните и получите</h3>
+            <p class="step-desc">
+              Выполните цель до дедлайна — получите ставку + донаты обратно. 
+              Не выполнили — деньги идут на благотворительность.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <h2 class="section-heading">Тарифный план</h2>
+      <p class="section-subheading">Выберите подходящий вариант для себя</p>
+      
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-badge">Базовый</div>
+          <div class="pricing-price">
+            <span class="price-currency">$</span>
+            <span class="price-amount">0</span>
+            <span class="price-period">/месяц</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ До 3 активных целей</li>
+            <li>✓ Публичные отчёты</li>
+            <li>✓ Донаты от сообщества</li>
+            <li>✓ Базовая аналитика</li>
+            <li>✓ Поддержка 24/7</li>
+          </ul>
+          <div class="pricing-note">Бесплатно навсегда</div>
+          <button class="btn btn-pricing" onclick="handleDownload()">Начать бесплатно</button>
+        </div>
+
+        <div class="pricing-card pricing-card-popular">
+          <div class="pricing-badge pricing-badge-popular">Популярный</div>
+          <div class="pricing-price">
+            <span class="price-currency">$</span>
+            <span class="price-amount">9</span>
+            <span class="price-period">/месяц</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ Неограниченное количество целей</li>
+            <li>✓ Приоритетная поддержка</li>
+            <li>✓ Расширенная аналитика</li>
+            <li>✓ Персональный коуч</li>
+            <li>✓ Без комиссий на донаты</li>
+            <li>✓ Эксклюзивные категории</li>
+          </ul>
+          <div class="pricing-note">44% экономия при годовой оплате</div>
+          <button class="btn btn-pricing-popular" onclick="handleDownload()">Попробовать Premium</button>
+        </div>
+
+        <div class="pricing-card">
+          <div class="pricing-badge">Команда</div>
+          <div class="pricing-price">
+            <span class="price-currency">$</span>
+            <span class="price-amount">29</span>
+            <span class="price-period">/месяц</span>
+          </div>
+          <ul class="pricing-features">
+            <li>✓ Всё из Premium</li>
+            <li>✓ До 10 участников</li>
+            <li>✓ Командные цели</li>
+            <li>✓ Общая аналитика</li>
+            <li>✓ Приоритетная поддержка</li>
+            <li>✓ API доступ</li>
+          </ul>
+          <div class="pricing-note">Идеально для команд и компаний</div>
+          <button class="btn btn-pricing" onclick="handleDownload()">Связаться с нами</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <h2 class="section-heading">Ответы на ваши вопросы</h2>
+      <p class="section-subheading">Часто задаваемые вопросы о cel.im</p>
+      
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Как работает финансовая мотивация?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            Вы ставите деньги на свою цель. Если выполняете её до дедлайна — получаете деньги обратно плюс донаты от сообщества. 
+            Если не выполняете — деньги идут на благотворительность. Это создаёт сильную мотивацию довести дело до конца.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Можно ли отслеживать несколько целей одновременно?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            Да! В бесплатной версии вы можете отслеживать до 3 активных целей одновременно. 
+            В Premium версии количество целей не ограничено.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Из чего складывается конечная сумма цели?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            Конечная сумма = ваша ставка + донаты от сообщества. Если вы выполняете цель, 
+            вы получаете всю эту сумму обратно. Донаты — это способ для других пользователей поддержать вас.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Что происходит с деньгами, если я не выполню цель?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            Если вы не выполняете цель до дедлайна, ваша ставка и все донаты автоматически переводятся 
+            на благотворительность. Мы сотрудничаем с проверенными благотворительными организациями.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Как работает система отчётов?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">
+            Вы публикуете отчёты о своём прогрессе: добавляете текст, фото, ссылки на соцсети. 
+            Сообщество может лайкать ваши отчёты, комментировать и отправлять донаты. 
+            Это создаёт публичную отчётность и дополнительную мотивацию.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Footer -->
+  <section class="cta-footer">
+    <div class="container">
+      <div class="cta-footer-content">
+        <div class="cta-footer-left">
+          <span class="cta-logo-text">cel.im</span>
+        </div>
+        <div class="cta-footer-center">
+          <h3 class="cta-footer-heading">Начните достигать целей уже сегодня</h3>
+          <p class="cta-footer-text">Присоединяйтесь к тысячам людей, которые меняют свою жизнь</p>
+        </div>
+        <div class="cta-footer-right">
+          <button class="btn btn-cta-footer" onclick="handleDownload()">Скачать</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-col">
+          <div class="footer-logo">
+            <span>cel.im</span>
+          </div>
+          <p class="footer-description">
+            Достигай целей с финансовой мотивацией
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4 class="footer-heading">Продукт</h4>
+          <a href="#features" class="footer-link">Возможности</a>
+          <a href="#how-it-works" class="footer-link">Как работает</a>
+          <a href="#pricing" class="footer-link">Тарифы</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="footer-heading">Компания</h4>
+          <a href="#" class="footer-link">О нас</a>
+          <a href="#" class="footer-link">Блог</a>
+          <a href="#" class="footer-link">Карьера</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="footer-heading">Поддержка</h4>
+          <a href="#faq" class="footer-link">FAQ</a>
+          <a href="#" class="footer-link">Контакты</a>
+          <a href="#" class="footer-link">Конфиденциальность</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 cel.im. Все права защищены.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function handleDownload() {
+      alert('Приложение скоро появится в App Store!\n\nПока вы можете протестировать веб-версию.');
+      window.location.href = '/index.html';
+    }
+
+    function toggleFaq(element) {
+      const faqItem = element.parentElement;
+      const isActive = faqItem.classList.contains('active');
+      
+      // Close all
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Open clicked if it wasn't active
+      if (!isActive) {
+        faqItem.classList.add('active');
+      }
+    }
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.feature-box, .goal-card, .step-item, .pricing-card, .faq-item').forEach(el => {
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

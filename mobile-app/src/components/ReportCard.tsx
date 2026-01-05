@@ -190,7 +190,7 @@ export default function ReportCard({
   const handleCopyLink = async () => {
     setMenuVisible(false);
     // Формируем ссылку на отчёт (можно использовать deep link или web URL)
-    const reportLink = `https://greedy-badger-196.convex.site/report/${report._id}`;
+    const reportLink = `https://cel.im/report/${report._id}`;
     await Clipboard.setStringAsync(reportLink);
     Alert.alert('Скопировано', 'Ссылка на отчёт скопирована в буфер обмена');
   };
